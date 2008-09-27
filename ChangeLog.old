@@ -1,0 +1,77 @@
+changeset:   9:2decb7089db2
+tag:         tip
+user:        Damien Elmes <hg@repose.cx>
+date:        Sun Sep 28 00:17:35 2008 +0900
+description:
+make sure to check counts on refresh or sync
+
+
+changeset:   8:c59dd78ec595
+user:        Damien Elmes <hg@repose.cx>
+date:        Wed Sep 24 02:02:19 2008 +0900
+description:
+new release
+
+
+changeset:   7:0b095a13cccb
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 04:33:23 2008 +0900
+description:
+update readme
+
+
+changeset:   6:354e83300303
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 04:27:05 2008 +0900
+description:
+add title and icon
+
+
+changeset:   5:5f1e2a3d44e6
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 15 04:16:52 2008 +0900
+description:
+embed in iframe for better presentation, add finished msg
+
+
+changeset:   4:4195af6e448d
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 09 15:50:40 2008 +0900
+description:
+fix documentation
+
+
+changeset:   3:280a985d1d0b
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 09 04:17:32 2008 +0900
+description:
+update docs
+
+
+changeset:   2:f8bc57300d09
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 09 04:08:34 2008 +0900
+description:
+interface improvements
+- make save button go red
+- increase save/sync button size
+- put stats in same location to save space
+- allow user to resize screen size
+- make answer button big
+- make stats more compact
+
+
+changeset:   1:0a4934d4e422
+user:        Damien Elmes <hg@repose.cx>
+date:        Tue Sep 09 01:45:30 2008 +0900
+description:
+improve syncing speed, report real average retention
+
+
+changeset:   0:c26bc478737e
+user:        Damien Elmes <hg@repose.cx>
+date:        Mon Sep 01 15:54:23 2008 +0900
+description:
+initial commit
+
+

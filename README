@@ -1,0 +1,204 @@
+AnkiMini - A small webserver for mobile devices like the iphone/zaurus
+=======================================================================
+
+To install on an iPhone/iPod touch, you'll need a jailbroken phone, wireless
+access, and Cydia. If you've installed AnkiMini before, you can skip to the
+AnkiMini section of this document.
+
+Cydia prerequisites:
+--------------------
+
+Install these first. Note that the place where files are installed can be
+small by default, and you might want to install bosstool first and run that.
+If you don't, and you run out of space, your device may fail to start and
+you'll have to restore it using iTunes. On the other hand, some apps may
+not work properly if you use bosstool to move your Applications folder.
+
+1. OpenSSH
+2. Setup Tools
+3. SQLite v3
+4. Python
+5. GNU C Compiler
+6. iPhone 2.0 Toolchain
+
+Note that to install some of these, you'll need to go into the Cydia options
+and set yourself as a developer. A 'GUI user' won't show all available
+packages.
+
+Get a terminal:
+---------------
+
+You'll then need to ssh into the device. On Windows download a program called
+putty. On Linux or OSX, run a command like:
+
+ssh root@1,2,3,4
+
+You'll need to check what IP your device has first by going into the network
+settings. Replace '1,2,3,4' with that IP.
+
+On windows, enter 'root' as the username to connect as.
+
+The password is 'alpine', usually. It may vary depending on which jailbreaking
+tool you used.
+
+Python prerequisites:
+---------------------
+
+Once you've got a terminal, you should see a prompt like:
+
+iPod:~ root#
+
+Type the following commands (without the hash). If something appears to be an
+error, report it the Anki author.
+
+SQLAlchemy:
+
+# easy_install 'sqlalchemy == 0.4.7p1'
+
+(that's a one, not an el)
+
+Check it's installed (nothing should be printed):
+
+iPod:~ root# python -c 'import sqlalchemy'
+iPod:~ root#
+
+SimpleJSON:
+
+# apt-get install sudo curl
+# curl -o json.tgz http://repose.ath.cx/json.tgz
+# tar xzf json.tgz
+# cd simplejson-1.9.2
+# python setup.py build
+# ldid -S build/lib.darwin-10.5-arm-2.5/simplejson/_speedups.dylib
+# python setup.py install
+
+Check it's installed:
+
+iPod:~ root# cd
+iPod:~ root# python -c 'import simplejson'
+iPod:~ root#
+
+AnkiMini:
+---------
+
+You need to copy the ankimini.tar.gz directory to your iPod. You can use 'scp'
+on Linux and OSX, or the copy tool on the putty homepage if you use Windows.
+
+If you use scp, you can do something like:
+
+scp /path/to/ankimini.tar.gz/on/your/computer root@1.2.3.4:
+
+(where 1,2,3,4 is the address you looked up earlier)
+
+Then, in a terminal on your device, do:
+
+# tar xzf ankimini.tar.gz
+
+You'll now have an ankimini directory. There is a configuration file there
+which you need to copy into your home directory if you haven't before.
+
+# cp ankimini/ankimini-config.py ~/.ankimini-config.py
+
+You'll need to edit that file later to change your sync username and password.
+If you are not comfortable with Unix editors, the fastest way would be to copy
+the file to your local computer, edit it, and copy it back.
+
+Now you need to copy your deck to the ankimini directory. By default, AnkiMini
+looks for a file called 'tango.anki'. You can change this if you edit the
+configuration file.
+
+Next we want to test if ankimini runs.
+
+iPod:~ root# ankimini/ankimini
+open deck..ankimini/tango.anki done
+starting server on port 8000
+
+If that appears, then you can test it. Without closing the terminal you're on,
+open Safari on your device, and in the location bar, type:
+
+http://127.0.0.1:8000/
+
+Bookmark this page if it loads.
+
+If everything has gone well, you should be able to review, save and sync. When
+you're happy with how things are working, it's time to start AnkiMini again
+but ensure it keeps running when you close the terminal session. Go back to
+the terminal that AnkiMini is running on, and press Ctrl+C to stop AnkiMini.
+Then run it again with:
+
+# nohup ankimini/ankimini
+
+Make sure to wait about 30 seconds before testing. You can then close the
+terminal. When you want to use Anki in the future, simply load the bookmark
+you saved earlier.
+
+Note that if you turn your device off, you'll need to start the Anki server
+manually again. Make sure to save before turning off the device.
+
+There is no need to disable the server when you're not using it - it takes up
+a little memory, but uses no processing power when you're not actually using
+it, so it won't change your battery life.
+
+Multiple decks
+--------------
+
+If you have more than one deck, register the deck you want to start with as
+before. Then in the location bar, enter URLs the following. All decks should
+be in the same directory as the deck you've set as your startup deck.
+
+http://127.0.0.1:8000/switch?d=deck1.anki
+
+http://127.0.0.1:8000/switch?d=deck2.anki
+
+Bookmark each in turn. Visiting the bookmark will save the current deck,
+switch to the new deck, and display the next question. It will take a few
+seconds to switch between decks.
+
+Changes:
+--------
+
+---------------
+AnkiMini 1.0.4:
+---------------
+
+- update due counts when page refreshed
+- update due counts after sync
+
+---------------
+AnkiMini 1.0.3:
+---------------
+
+- support for multiple decks
+- make sure to refresh queue when checking if deck is finished
+- make sure clock is set correctly when syncing
+- latest anki library (new sync screen, scheduling, etc)
+
+---------------
+AnkiMini 1.0.2:
+---------------
+
+- congratulations page properly displayed when deck finished
+- no longer refreshes page on each action (faster)
+- hide location bar
+- since the location doesn't change, running the anki icon on the home screen
+  will reuse an existing window
+- icon for the iphone
+- latest libanki library
+
+If you're an existing user, please change the bookmark to:
+
+  http://127.0.0.1:8000/
+
+---------------
+AnkiMini 1.0.1:
+---------------
+
+- much faster syncing - 15-30+ seconds reduced to 3.5 seconds on 4000 card deck
+- interface improvements
+- new anki library with new scheduling options
+
+-------------
+AnkiMini 1.0:
+-------------
+
+- initial release
