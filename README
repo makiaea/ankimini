@@ -169,6 +169,10 @@ repeat the ankimini page of the installation.
 - sound support (see prereq 7 at top of document)
 - image support
 - check new card count after sync or refresh
+- replay sound button
+- mark card button
+- easier to hit buttons
+- more readable stats
 
 ---------------
 AnkiMini 1.0.4:
