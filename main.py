@@ -5,13 +5,17 @@
 """\
 A mini anki webserver
 ======================
+
+This is a quick hack.
 """
 __docformat__ = 'restructuredtext'
 
-import time, cgi, sys, os
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+import time, cgi, sys, os, re, subprocess
+from BaseHTTPServer import HTTPServer
+from SimpleHTTPServer import SimpleHTTPRequestHandler
 from anki import DeckStorage as ds
 from anki.sync import SyncClient, HttpSyncServerProxy
+from anki.media import mediaRefs
 
 configFile = os.path.expanduser("~/.ankimini-config.py")
 try:
@@ -27,7 +31,7 @@ deck = ds.Deck(DECK_PATH)
 
 currentCard = None
 
-class Handler(BaseHTTPRequestHandler):
+class Handler(SimpleHTTPRequestHandler):
 
     def _outer(self):
         return """
@@ -101,6 +105,21 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         self.wfile.flush()
 
     def do_GET(self):
+        lp = self.path.lower()
+        def writeImage():
+            self.wfile.write(open(os.path.join(deck.mediaDir(), lp[1:])).read())
+        if lp.endswith(".jpg"):
+            self.send_response(200)
+            self.send_header("Content-type", "image/jpeg")
+            self.end_headers()
+            writeImage()
+            return
+        if lp.endswith(".png"):
+            self.send_response(200)
+            self.send_header("Content-type", "image/png")
+            self.end_headers()
+            writeImage()
+            return
         serviceStart = time.time()
         global currentCard, deck
         self.send_response(200)
@@ -227,7 +246,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 <form action="/answer" method="get">
 <input class="bigButton" type="submit" class="button" value="Answer">
 """ % {
-        "question": c.question,
+        "question": self.prepareMedia(c.question),
         }))
                 buffer += (self._bottom)
         elif self.path.startswith("/answer"):
@@ -243,8 +262,8 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 <table width="100%%">
 <tr>
 """ % {
-    "question": c.question,
-    "answer": c.answer,
+    "question": self.prepareMedia(c.question, auto=False),
+    "answer": self.prepareMedia(c.answer),
     "mod": c.modified,
     })
             for i in range(5):
@@ -266,6 +285,20 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                  "A: %(gMatureYes%)3.1f%%.<br>"
                  "%(failed)d+%(successive)d+%(new)d ETA: %(timeLeft)s") % s)
         return stats
+
+    def prepareMedia(self, string, auto=True):
+        for (fullMatch, filename, replacementString) in mediaRefs(string):
+            if fullMatch.startswith("["):
+                if filename.lower().endswith(".mp3") and auto:
+                    subprocess.Popen(["play",
+                                      os.path.join(deck.mediaDir(), filename)])
+                string = re.sub(re.escape(fullMatch), "", string)
+            else:
+                pass
+                #string = re.sub(re.escape(fullMatch), '''
+                #<img src="%(f)s">''' % {'f': relativeMediaPath(filename)}, string)
+                #return string
+        return string
 
 def run(server_class=HTTPServer,
         handler_class=Handler):
