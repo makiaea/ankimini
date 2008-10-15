@@ -126,6 +126,7 @@ body { margin-top: 0px; padding: 0px; }
         self.wfile.flush()
 
     def do_GET(self):
+        self.played = False
         lp = self.path.lower()
         def writeImage():
             self.wfile.write(open(os.path.join(deck.mediaDir(), lp[1:])).read())
@@ -343,8 +344,10 @@ value="3">%(3)s</button></td>
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
                 if filename.lower().endswith(".mp3") and auto:
-                    subprocess.Popen(["play",
-                                      os.path.join(deck.mediaDir(), filename)])
+                    if not self.played:
+                        subprocess.Popen(["play",
+                                          os.path.join(deck.mediaDir(), filename)])
+                        self.played = True
                 string = re.sub(re.escape(fullMatch), "", string)
             else:
                 pass
