@@ -20,6 +20,7 @@ not work properly if you use bosstool to move your Applications folder.
 4. Python
 5. GNU C Compiler
 6. iPhone 2.0 Toolchain
+7. Erica utilities (for sound)
 
 Note that to install some of these, you'll need to go into the Cydia options
 and set yourself as a developer. A 'GUI user' won't show all available
@@ -86,13 +87,13 @@ on Linux and OSX, or the copy tool on the putty homepage if you use Windows.
 
 If you use scp, you can do something like:
 
-scp /path/to/ankimini.tar.gz/on/your/computer root@1.2.3.4:
+scp /path/to/ankimini.tar.gz/on/your/computer mobile@1.2.3.4:
 
 (where 1,2,3,4 is the address you looked up earlier)
 
 Then, in a terminal on your device, do:
 
-# tar xzf ankimini.tar.gz
+$ tar xzf ankimini.tar.gz
 
 You'll now have an ankimini directory. There is a configuration file there
 which you need to copy into your home directory if you haven't before.
@@ -109,7 +110,7 @@ configuration file.
 
 Next we want to test if ankimini runs.
 
-iPod:~ root# ankimini/ankimini
+$ ankimini/ankimini
 open deck..ankimini/tango.anki done
 starting server on port 8000
 
@@ -126,7 +127,7 @@ but ensure it keeps running when you close the terminal session. Go back to
 the terminal that AnkiMini is running on, and press Ctrl+C to stop AnkiMini.
 Then run it again with:
 
-# nohup ankimini/ankimini
+$ nohup ankimini/ankimini
 
 Make sure to wait about 30 seconds before testing. You can then close the
 terminal. When you want to use Anki in the future, simply load the bookmark
@@ -156,6 +157,18 @@ seconds to switch between decks.
 
 Changes:
 --------
+
+---------------
+AnkiMini 1.0.5:
+---------------
+
+To enable sound support, AnkiMini has to be run as user 'mobile', not user
+'root', so you'll need to either copy the files from root's user directory, or
+repeat the ankimini page of the installation.
+
+- sound support (see prereq 7 at top of document)
+- image support
+- check new card count after sync or refresh
 
 ---------------
 AnkiMini 1.0.4:
