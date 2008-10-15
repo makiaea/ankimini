@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
+#
+# this is a quick hack because I'm so busy with other things. It should really
+# be rewritten to use AJAX and tidied up a lot.
+#
 
 """\
 A mini anki webserver
 ======================
-
-This is a quick hack.
 """
 __docformat__ = 'restructuredtext'
 
@@ -16,6 +18,7 @@ from SimpleHTTPServer import SimpleHTTPRequestHandler
 from anki import DeckStorage as ds
 from anki.sync import SyncClient, HttpSyncServerProxy
 from anki.media import mediaRefs
+from anki.utils import parseTags, joinTags
 
 configFile = os.path.expanduser("~/.ankimini-config.py")
 try:
@@ -30,6 +33,8 @@ if not os.path.exists(DECK_PATH):
 deck = ds.Deck(DECK_PATH)
 
 currentCard = None
+
+history = []
 
 class Handler(SimpleHTTPRequestHandler):
 
@@ -60,16 +65,23 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             saveClass="medButtonRed"
         else:
             saveClass="medButton"
+        if currentCard and "marked" in currentCard.tags.lower():
+            markClass = "medButtonRed"
+        else:
+            markClass = "medButton"
         if self.errorMsg:
             self.errorMsg = '<p style="color: red">' + self.errorMsg + "</p>"
+        stats = self.getStats()
         return """
 <html>
 <head>
 <style>
 .bigButton
-{ font-size: 18px; width: 450px; height: 50px; padding: 5px;}
+{ font-size: 18px; width: 450px; height: 150px; padding: 5px;}
 .easeButton
-{ font-size: 18px; width: 85px; height: 50px; padding: 5px;}
+{ font-size: 18px; width: 100px; height: 85px; padding: 5px;}
+.easeButtonB
+{ font-size: 18px; width: 170px; height: 180px; padding: 5px;}
 .medButton
 { font-size: 18px; width: 100px; height: 40px; padding: 5px;}
 .medButtonRed
@@ -78,22 +90,31 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 { font-size: 30px; color:#0000ff;}
 .a
 { font-size: 30px; }
+body { margin-top: 0px; padding: 0px; }
 </style>
 </head>
 <body>
+<table width="100%%">
+<tr valign=middle><td align=left>%s</td>
+<td align=right>%s</td></table>
 <table width="100%%"><tr valign=middle><td align=left>
 <form action="/save" method="get">
 <input class="%s" type="submit" class="button" value="Save">
 </form></td>
-<td align=center valign=top>
-%s
-</td>
+<td align=left>
+<form action="/mark" method="get">
+<input class="%s" type="submit" class="button" value="Mark">
+</form></td>
+<td align=right>
+<form action="/replay" method="get">
+<input class="medButton" type="submit" class="button" value="Replay">
+</form></td>
 <td align=right>
 <form action="/sync" method="get">
 <input class="medButton" type="submit" class="button" value="Sync">
 </form></td></tr></table>
 %s
-""" % (saveClass, self.getStats(), self.errorMsg)
+""" % (stats[0], stats[1], saveClass, markClass, self.errorMsg)
 
     _bottom = """
 </form>
@@ -120,6 +141,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             self.end_headers()
             writeImage()
             return
+        history.append(self.path)
         serviceStart = time.time()
         global currentCard, deck
         self.send_response(200)
@@ -161,6 +183,21 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         elif self.path.startswith("/save"):
             deck.save()
             self.path = "/question"
+        elif self.path.startswith("/mark"):
+            if "marked" in currentCard.tags.lower():
+                t = parseTags(currentCard.tags)
+                t.remove("Marked")
+                currentCard.tags = joinTags(t)
+            else:
+                currentCard.tags = joinTags(parseTags(currentCard.tags) + ["Marked"])
+            currentCard.toDB(deck.s)
+            history.pop()
+            self.path = history[-1]
+        elif self.path.startswith("/replay"):
+            self.prepareMedia(currentCard.question)
+            self.prepareMedia(currentCard.answer)
+            history.pop()
+            self.path = history[-1]
         elif self.path.startswith("/sync"):
             deck.save()
             deck.lastLoaded = time.time()
@@ -264,13 +301,19 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
     "answer": self.prepareMedia(c.answer),
     "mod": c.modified,
     })
-            for i in range(5):
-                qual = deck.nextIntervalStr(c, i)
-                buffer += ("""
-<td align=center>%s<br>
-<input class="easeButton" type="submit" class="button" name="q" value="%d"/>
-</td>
-""" % (qual, i))
+            ints = {}
+            for i in range(1, 5):
+                ints[str(i)] = deck.nextIntervalStr(c, i, True)
+            buffer += ("""
+<td rowspan=2><button class="easeButtonB" type="submit" class="button" name="q"
+value="1">%(1)s</button></td>
+<td><button class="easeButton" type="submit" class="button" name="q"
+value="2">%(2)s</button><br>
+<button class="easeButton" type="submit" class="button" name="q"
+value="4">%(4)s</button></td>
+<td><button class="easeButtonB" type="submit" class="button" name="q"
+value="3">%(3)s</button></td>
+""" % ints)
             buffer += ("</tr></table>")
             buffer += (self._bottom)
         self.wfile.write(buffer.encode("utf-8") + "\n")
@@ -278,11 +321,23 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 
     def getStats(self):
         s = deck.getStats()
-        stats = (("T: %(dYesTotal)d/%(dTotal)d "
-                 "(%(dYesTotal%)3.1f%%) "
-                 "A: %(gMatureYes%)3.1f%%.<br>"
-                 "%(failed)d+%(successive)d+%(new)d ETA: %(timeLeft)s") % s)
-        return stats
+        stats = (("<font size=+1>T: <b>%(dYesTotal)d/%(dTotal)d</b> "
+                 "(<b>%(dYesTotal%)3.1f%%</b>) "
+                 "A: <b>%(gMatureYes%)3.1f%%</b>. ETA: <b>%(timeLeft)s</b>"
+                  "</font>") % s)
+        f = "<font color=#990000>%(failed)d</font>"
+        r = "<font color=#000000>%(successive)d</font>"
+        n = "<font color=#0000ff>%(new)d</font>"
+        if currentCard:
+            if currentCard.reps:
+                if currentCard.successive:
+                    r = "<u>" + r + "</u>"
+                else:
+                    f = "<u>" + f + "</u>"
+            else:
+                n = "<u>" + n + "</u>"
+        stats2 = ("<font size=+2>%s+%s+%s</font>" % (f,r,n)) % s
+        return (stats, stats2)
 
     def prepareMedia(self, string, auto=True):
         for (fullMatch, filename, replacementString) in mediaRefs(string):
