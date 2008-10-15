@@ -156,7 +156,8 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 
         if self.path == "/":
             # refresh
-            deck.rebuildQueue()
+            deck._countsDirty = True
+            deck.markExpiredCardsDue()
             self.flushWrite(self._outer())
         elif self.path.startswith("/save"):
             deck.save()
@@ -217,7 +218,6 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                 deck.lastLoaded = deck.modified
                 deck.s.flush()
                 deck.s.commit()
-                deck.rebuildQueue()
                 self.flushWrite('<br><a href="/question">return</a>')
                 self.wfile.write("</body></html>")
                 self.wfile.flush()
