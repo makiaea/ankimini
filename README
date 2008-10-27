@@ -155,8 +155,47 @@ Bookmark each in turn. Visiting the bookmark will save the current deck,
 switch to the new deck, and display the next question. It will take a few
 seconds to switch between decks.
 
+Starting automatically
+----------------------
+
+Instructions from 'sompops'.
+
+1. Copy and paste the code between the lines below into a file called "com.Anki.plist"
+2. Place the file in /System/Library/LaunchDaemons using WinSCP or equivalent.
+3. Reboot your Iphone and AnkiMini should be running.
+
+Here is the code:
+
+8<------------------------------------------------------------------------------
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+       <key>Label</key>
+       <string>com.Anki</string>
+       <key>OnDemand</key>
+       <false/>        <key>ProgramArguments</key>
+       <array>
+	       <string>/bin/bash</string>                <string>--noediting</string>
+	       <string>-c</string>
+	       <string>/var/root/ankimini/ankimini</string>
+       </array>
+</dict>
+</plist>
+
+8<------------------------------------------------------------------------------
+
 Changes:
 --------
+
+---------------
+AnkiMini 1.1.0:
+---------------
+
+- new button layout
+- new libanki
 
 ---------------
 AnkiMini 1.0.9:

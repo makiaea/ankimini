@@ -79,7 +79,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 .bigButton
 { font-size: 18px; width: 450px; height: 150px; padding: 5px;}
 .easeButton
-{ font-size: 18px; width: 100px; height: 85px; padding: 5px;}
+{ font-size: 18px; width: 105px; height: 130px; padding: 5px;}
 .easeButtonB
 { font-size: 18px; width: 170px; height: 180px; padding: 5px;}
 .medButton
@@ -306,14 +306,14 @@ body { margin-top: 0px; padding: 0px; }
             for i in range(1, 5):
                 ints[str(i)] = deck.nextIntervalStr(c, i, True)
             buffer += ("""
-<td rowspan=2><button class="easeButtonB" type="submit" class="button" name="q"
+<td><button class="easeButton" type="submit" class="button" name="q"
 value="1">%(1)s</button></td>
 <td><button class="easeButton" type="submit" class="button" name="q"
-value="2">%(2)s</button><br>
-<button class="easeButton" type="submit" class="button" name="q"
-value="4">%(4)s</button></td>
-<td><button class="easeButtonB" type="submit" class="button" name="q"
+value="2">%(2)s</button><br></td>
+<td><button class="easeButton" type="submit" class="button" name="q"
 value="3">%(3)s</button></td>
+<td><button class="easeButton" type="submit" class="button" name="q"
+value="4">%(4)s</button></td>
 """ % ints)
             buffer += ("</tr></table>")
             buffer += (self._bottom)
@@ -322,10 +322,9 @@ value="3">%(3)s</button></td>
 
     def getStats(self):
         s = deck.getStats()
-        stats = (("<font size=+1>T: <b>%(dYesTotal)d/%(dTotal)d</b> "
-                 "(<b>%(dYesTotal%)3.1f%%</b>) "
-                 "A: <b>%(gMatureYes%)3.1f%%</b>. ETA: <b>%(timeLeft)s</b>"
-                  "</font>") % s)
+        stats = (("T: %(dYesTotal)d/%(dTotal)d "
+                 "(%(dYesTotal%)3.1f%%) "
+                 "A: <b>%(gMatureYes%)3.1f%%</b>. ETA: <b>%(timeLeft)s</b>") % s)
         f = "<font color=#990000>%(failed)d</font>"
         r = "<font color=#000000>%(successive)d</font>"
         n = "<font color=#0000ff>%(new)d</font>"

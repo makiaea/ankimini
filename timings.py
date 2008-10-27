@@ -14,18 +14,25 @@ t = time()
 d.rebuildQueue()
 print time() - t
 
+#d.newCardsPerDay = 1000000
+
 # timing
-for i in range(5):
+for i in range(5000):
     t3 = time()
-    print "getIds..",
+    #print "get..",
     t = time()
-    card = d.getCard(orm=False)
-    #cards = d.getCards(orm=False, limit=10)
+    #card = d.getCard(orm=False)
+    cards = d.getCards()
+#     for (k,v) in cards.items():
+#         for x in v:
+#             print k, x
     #print [c.id for c in cards]
     print time() - t
+    q = d.queueForCard(card)
     t = time()
-    print "ans..",
-    d.answerCard(card, 1)
-    print time() - t; t = time()
+    #print "ans..",
+    d.answerCard(card, 2)
+    #print time() - t; t = time()
     s = d.getStats()
-    print "total all", time() - t3
+    #print "sta..", time() - t
+    print "all..", time() - t3, card.id, q, i
