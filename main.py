@@ -176,7 +176,7 @@ body { margin-top: 0px; padding: 0px; }
 
         if self.path == "/":
             # refresh
-            deck.rebuildQueue(updateRelative=False)
+            deck.rebuildQueue()
             self.flushWrite(self._outer())
         elif self.path.startswith("/save"):
             deck.save()
@@ -247,7 +247,7 @@ body { margin-top: 0px; padding: 0px; }
                 client.applyPayloadReply(res)
                 # finished. save deck, preserving mod time
                 self.flushWrite("Sync complete.")
-                deck.rebuildQueue(updateRelative=False)
+                deck.rebuildQueue()
                 deck.lastLoaded = deck.modified
                 deck.s.flush()
                 deck.s.commit()
@@ -304,7 +304,7 @@ body { margin-top: 0px; padding: 0px; }
                 ints[str(i)] = deck.nextIntervalStr(c, i, True)
             buffer += ("""
 <td><button class="easeButton" type="submit" class="button" name="q"
-value="1">%(1)s</button></td>
+value="1">Soon</button></td>
 <td><button class="easeButton" type="submit" class="button" name="q"
 value="2">%(2)s</button><br></td>
 <td><button class="easeButton" type="submit" class="button" name="q"
@@ -323,7 +323,7 @@ value="4">%(4)s</button></td>
                  "(%(dYesTotal%)3.1f%%) "
                  "A: <b>%(gMatureYes%)3.1f%%</b>. ETA: <b>%(timeLeft)s</b>") % s)
         f = "<font color=#990000>%(failed)d</font>"
-        r = "<font color=#000000>%(successive)d</font>"
+        r = "<font color=#000000>%(rev)d</font>"
         n = "<font color=#0000ff>%(new)d</font>"
         if currentCard:
             if currentCard.reps:
