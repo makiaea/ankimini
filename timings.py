@@ -7,12 +7,8 @@ from anki import DeckStorage as ds
 
 print "open deck.."
 t = time()
-d = ds.Deck("tango.anki", rebuild=False)
+d = ds.Deck("tango.anki")
 print "opened in", time() - t
-print "rebuild (new)..",
-t = time()
-d.rebuildQueue()
-print time() - t
 
 #d.newCardsPerDay = 1000000
 
@@ -27,12 +23,11 @@ for i in range(5000):
 #         for x in v:
 #             print k, x
     #print [c.id for c in cards]
-    print time() - t
-    q = d.queueForCard(card)
-    t = time()
-    #print "ans..",
-    d.answerCard(card, 2)
-    #print time() - t; t = time()
-    s = d.getStats()
-    #print "sta..", time() - t
-    print "all..", time() - t3, card.id, q, i
+    print "getc", time() - t
+#     t = time()
+#     #print "ans..",
+#     d.answerCard(card, 2)
+#     #print time() - t; t = time()
+#     s = d.getStats()
+#     #print "sta..", time() - t
+#     print "all..", time() - t3, card.id, q, i

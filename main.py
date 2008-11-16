@@ -2,9 +2,6 @@
 # Copyright: Damien Elmes <anki@ichi2.net>
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 #
-# this is a quick hack because I'm so busy with other things. It should really
-# be rewritten to use AJAX and tidied up a lot.
-#
 
 """\
 A mini anki webserver
