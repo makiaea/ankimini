@@ -264,13 +264,8 @@ body { margin-top: 0px; padding: 0px; }
             # get new card
             c = deck.getCard(orm=False)
             if not c:
-                # try once more after refreshing queue
-                deck._countsDirty = True
-                deck.markExpiredCardsDue()
-                c = deck.getCard(orm=False)
-                if not c:
-                    buffer += (self._top() +
-                               deck.deckFinishedMsg())
+                buffer += (self._top() +
+                           deck.deckFinishedMsg())
             else:
                 currentCard = c
                 buffer += (self._top() + ("""
