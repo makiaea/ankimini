@@ -27,7 +27,7 @@ except:
 print "open deck.. " + DECK_PATH
 if not os.path.exists(DECK_PATH):
     raise ValueError("Couldn't find your deck. Please check config.")
-deck = ds.Deck(DECK_PATH)
+deck = ds.Deck(DECK_PATH, backup=False)
 
 currentCard = None
 
