@@ -45,7 +45,10 @@ tool you used.
 Python prerequisites:
 ---------------------
 
-Once you've got a terminal, you should see a prompt like:
+First, open safari on your iphone, and surf to pypi.python.org. This will
+cache the page address for later.
+
+Then, in the terminal you opened on your computer, you should see a prompt like:
 
 iPod:~ root#
 
