@@ -98,6 +98,9 @@ Then, in a terminal on your device, do:
 
 $ tar xzf ankimini.tar.gz
 
+Make sure to untar from the device, not your host computer, or you'll lose
+permissions on some of the files.
+
 You'll now have an ankimini directory. There is a configuration file there
 which you need to copy into your home directory if you haven't before.
 
