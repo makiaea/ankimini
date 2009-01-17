@@ -16,6 +16,7 @@ from anki import DeckStorage as ds
 from anki.sync import SyncClient, HttpSyncServerProxy
 from anki.media import mediaRefs
 from anki.utils import parseTags, joinTags
+from anki.facts import Fact
 
 configFile = os.path.expanduser("~/.ankimini-config.py")
 try:
@@ -62,7 +63,9 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             saveClass="medButtonRed"
         else:
             saveClass="medButton"
-        if currentCard and "marked" in currentCard.tags.lower():
+        if currentCard and deck.s.scalar(
+            "select 1 from facts where id = :id and tags like '%marked%'",
+            id=currentCard.factId):
             markClass = "medButtonRed"
         else:
             markClass = "medButton"
@@ -182,13 +185,16 @@ body { margin-top: 0px; padding: 0px; }
             deck.save()
             self.path = "/question"
         elif self.path.startswith("/mark"):
-            if "marked" in currentCard.tags.lower():
-                t = parseTags(currentCard.tags)
+            f = deck.s.query(Fact).get(currentCard.factId)
+            if "marked" in f.tags.lower():
+                t = parseTags(f.tags)
                 t.remove("Marked")
-                currentCard.tags = joinTags(t)
+                f.tags = joinTags(t)
             else:
-                currentCard.tags = joinTags(parseTags(currentCard.tags) + ["Marked"])
-            currentCard.toDB(deck.s)
+                f.tags = joinTags(parseTags(
+                    f.tags) + ["Marked"])
+            deck.s.flush()
+            deck.s.expunge(f)
             history.pop()
             self.path = history[-1]
         elif self.path.startswith("/replay"):

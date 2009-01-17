@@ -133,7 +133,7 @@ but ensure it keeps running when you close the terminal session. Go back to
 the terminal that AnkiMini is running on, and press Ctrl+C to stop AnkiMini.
 Then run it again with:
 
-$ nohup ankimini/ankimini
+$ nohup ankimini/ankimini &
 
 Make sure to wait about 30 seconds before testing. You can then close the
 terminal. When you want to use Anki in the future, simply load the bookmark
@@ -184,9 +184,9 @@ Here is the code:
        <key>OnDemand</key>
        <false/>        <key>ProgramArguments</key>
        <array>
-	       <string>/bin/bash</string>                <string>--noediting</string>
+	       <string>/bin/sh</string>                <string>--noediting</string>
 	       <string>-c</string>
-	       <string>/var/root/ankimini/ankimini</string>
+	       <string>/var/mobile/ankimini/ankimini</string>
        </array>
 </dict>
 </plist>
@@ -195,6 +195,21 @@ Here is the code:
 
 Changes:
 --------
+
+---------------
+AnkiMini 1.1.3:
+---------------
+
+- new libanki
+- fix marking card
+- update autostart code to use mobile user, not root user
+
+---------------
+AnkiMini 1.1.2:
+---------------
+
+- documentation changes
+- new libanki
 
 ---------------
 AnkiMini 1.1.2:
