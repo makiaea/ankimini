@@ -26,6 +26,9 @@ Note that to install some of these, you'll need to go into the Cydia options
 and set yourself as a developer. A 'GUI user' won't show all available
 packages.
 
+You may need to add a different repository location to get the Erica
+utilities.
+
 Get a terminal:
 ---------------
 
@@ -69,9 +72,9 @@ iPod:~ root#
 SimpleJSON:
 
 # apt-get install sudo curl
-# curl -o json.tgz http://repose.ath.cx/json.tgz
+# curl -o json.tgz http://pypi.python.org/packages/source/s/simplejson/simplejson-2.0.7.tar.gz
 # tar xzf json.tgz
-# cd simplejson-1.9.2
+# cd simplejson-2.0.7
 # python setup.py build
 # ldid -S build/lib.darwin-10.5-arm-2.5/simplejson/_speedups.dylib
 # python setup.py install
