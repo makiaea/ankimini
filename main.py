@@ -193,6 +193,8 @@ body { margin-top: 0px; padding: 0px; }
             else:
                 f.tags = joinTags(parseTags(
                     f.tags) + ["Marked"])
+            f.setModified()
+            deck.flushMod()
             deck.s.flush()
             deck.s.expunge(f)
             history.pop()
