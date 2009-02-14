@@ -344,7 +344,7 @@ value="4">%(4)s</button></td>
             if fullMatch.startswith("["):
                 if filename.lower().endswith(".mp3") and auto:
                     if not self.played:
-                        subprocess.Popen(["play",
+                        subprocess.Popen([PLAY_COMMAND,
                                           os.path.join(deck.mediaDir(), filename)])
                         self.played = True
                 string = re.sub(re.escape(fullMatch), "", string)
