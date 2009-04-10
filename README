@@ -167,34 +167,80 @@ seconds to switch between decks.
 Starting automatically
 ----------------------
 
-Instructions from 'sompops'.
+Instructions from Richard Colley:
 
-1. Copy and paste the code between the lines below into a file called "com.Anki.plist"
-2. Place the file in /System/Library/LaunchDaemons using WinSCP or equivalent.
-3. Reboot your Iphone and AnkiMini should be running.
-
-Here is the code:
-
-8<------------------------------------------------------------------------------
+1. Create a file /Library/LaunchDaemons/com.Anki.plist and put the following
+in it:
 
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN"
-"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://
+www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+       <key>KeepAlive</key>
+       <true/>
        <key>Label</key>
        <string>com.Anki</string>
-       <key>OnDemand</key>
-       <false/>        <key>ProgramArguments</key>
+       <key>ProgramArguments</key>
        <array>
-	       <string>/bin/sh</string>                <string>--noediting</string>
-	       <string>-c</string>
-	       <string>/var/mobile/ankimini/ankimini</string>
+               <string>/bin/sh</string>
+               <string>--noediting</string>
+               <string>-c</string>
+               <string>/var/mobile/ankimini/ankimini</string>
        </array>
+       <key>UserName</key>
+       <string>mobile</string>
+       <key>WorkingDirectory</key>
+       <string>/var/mobile/ankimini</string>
 </dict>
 </plist>
 
-8<------------------------------------------------------------------------------
+2. launchctl load -w /System/Library/LaunchDaemons/com.Anki.plist
+
+Starting/stopping Anki
+----------------------
+
+If you don't want to leave Anki running all the time, you can set it up to
+start when you request it, instead.
+
+Instructions from Richard Colley:
+
+Also, once you get this working, you can start and stop the ankimini
+server if you change the com.Anki.plist file by setting:
+
+       <key>KeepAlive</key>
+       <false/>
+
+Then unload, and load this config.
+
+ root#  launchctl unload -w /Library/LaunchDaemons/com.Anki.plist
+ root#  launchctl load -w /Library/LaunchDaemons/com.Anki.plist
+
+Then to start the server:
+
+ root# launchctl start com.Anki
+
+and to stop
+
+ root# launchctl stop com.Anki
+
+status with
+
+ root# launchctl list com.Anki
+
+NB: if you do this, anki won't start on boot.
+
+Then, if you want to be really tricky, you can use BossPrefs to start/
+stop ankimini server.  You need to create a file called /Applications/
+BossPrefs.app/services/AnkiMini with the following contents:
+
+   launchctl start com.Anki
+   launchctl stop com.Anki
+   ankimini/main.py
+   /var/mobile/ankimini/ankimini.png
+
+Then, start BossPrefs, and you should see a toggle called AnkiMini.
+If it is "ON", then ankimini should be running/started.
 
 Changes:
 --------
