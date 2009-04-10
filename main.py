@@ -342,7 +342,8 @@ value="4">%(4)s</button></td>
     def prepareMedia(self, string, auto=True):
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
-                if filename.lower().endswith(".mp3") and auto:
+                if auto and (filename.lower().endswith(".mp3") or
+                             filename.lower().endswith(".wav")):
                     if not self.played:
                         subprocess.Popen([PLAY_COMMAND,
                                           os.path.join(deck.mediaDir(), filename)])
