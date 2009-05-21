@@ -29,6 +29,7 @@ print "open deck.. " + DECK_PATH
 if not os.path.exists(DECK_PATH):
     raise ValueError("Couldn't find your deck. Please check config.")
 deck = ds.Deck(DECK_PATH, backup=False)
+deck.s.execute("pragma cache_size = 1000")
 
 currentCard = None
 
@@ -168,6 +169,7 @@ body { margin-top: 0px; padding: 0px; }
                 newdeck = ds.Deck(os.path.join(
                     os.path.dirname(DECK_PATH),
                     new))
+                newdeck.s.execute("pragma cache_size = 1000")
                 success = True
             except:
                 pass
