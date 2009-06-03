@@ -73,6 +73,12 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         if self.errorMsg:
             self.errorMsg = '<p style="color: red">' + self.errorMsg + "</p>"
         stats = self.getStats()
+        if currentCard:
+            background = deck.s.scalar(
+                "select lastFontColour from cardModels where id = :id",
+                id=currentCard.cardModelId)
+        else:
+            background = "#ffffff"
         return """
 <html>
 <head>
@@ -115,10 +121,13 @@ body { margin-top: 0px; padding: 0px; }
 <input class="medButton" type="submit" class="button" value="Sync">
 </form></td></tr></table>
 %s
-""" % (stats[0], stats[1], saveClass, markClass, self.errorMsg)
+<div style='background: %s'>
+""" % (stats[0], stats[1], saveClass, markClass, self.errorMsg,
+       background)
 
     _bottom = """
 </form>
+</div>
 </body>
 </html>"""
 
@@ -280,7 +289,9 @@ body { margin-top: 0px; padding: 0px; }
                 currentCard = c
                 buffer += (self._top() + ("""
 <br><div class="q">%(question)s</div>
-<br><br>
+<br>
+</div>
+<br>
 <form action="/answer" method="get">
 <input class="bigButton" type="submit" class="button" value="Answer">
 """ % {
@@ -295,7 +306,9 @@ body { margin-top: 0px; padding: 0px; }
 <br>
 <div class="q">%(question)s</div>
 <div class="a">%(answer)s</div>
-<br><br><form action="/question" method="get">
+<br>
+</div>
+<br><form action="/question" method="get">
 <input type="hidden" name="mod" value="%(mod)d">
 <table width="100%%">
 <tr>
