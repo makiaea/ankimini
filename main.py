@@ -342,6 +342,8 @@ value="4">%(4)s</button></td>
         return (stats, stats2)
 
     def prepareMedia(self, string, auto=True):
+        if not deck.mediaDir():
+            return string
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
                 if auto and (filename.lower().endswith(".mp3") or
