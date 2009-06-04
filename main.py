@@ -277,7 +277,7 @@ body { margin-top: 0px; padding: 0px; }
 		  </fieldset>
 		  <fieldset><legend>Deck</legend>
 		   <label for="deckpath">Deck</label>  <input id="deckpath" type="text" name="deckpath" value="%s" autocorrect="off" autocapitalize="off" />
-                   <em>(port change doesn't take effect until a server restart)</em>
+                   <em>(change doesn't take effect until a server restart)</em>
 		  </fieldset>
 		  <fieldset><legend>Misc details</legend>
 		   <label for="play">Play command</label>  <input id="play" type="text" name="play" value="%s" autocorrect="off" autocapitalize="off" /> <br />
