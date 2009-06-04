@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# install | upgrade | abort-upgrade
+
+if [[ $1 == install || $1 == upgrade ]]; then
+	launchctl stop com.Anki >/dev/null 2>&1
+	launchctl unload -w /Library/LaunchDaemons/com.Anki.plist >/dev/null 2>&1
+	launchctl unload -w /System/Library/LaunchDaemons/com.Anki.plist >/dev/null 2>&1
+	launchctl stop net.ichi2.ankimini >/dev/null 2>&1
+	launchctl unload -w /Library/LaunchDaemons/net.ichi2.ankimini.plist >/dev/null 2>&1
+fi
+
+exit 0

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# remove | purge | upgrade | failed-upgrade | abort-install | abort-upgrade | disappear
+
+#if [[ $1 == remove || $1 == purge ]]; then
+#	:
+#fi
+

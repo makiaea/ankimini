@@ -1,0 +1,2 @@
+#!/bin/bash
+exec openURL "http://localhost:8000/"

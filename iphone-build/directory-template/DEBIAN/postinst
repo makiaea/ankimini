@@ -1,0 +1,52 @@
+#!/bin/bash
+# configure | abort-upgrade | abort-remove | abort-deconfigure
+
+OLDER_ANKI_DIR=~mobile
+OLDER_CONFIG_FILE=.ankimini-config.py
+OLD_CONFIG_FILE=ankimini-config.py
+NEW_CONFIG_FILE=$OLD_CONFIG_FILE
+OLD_ANKI_DIR=~mobile/Library/AnkiMini
+NEW_ANKI_DIR=~mobile/.anki
+APP_DIR=/Applications/AnkiMini.app
+
+# relocate ankimini decks/config files
+relocate_old_config()
+{
+	# if there's a really old config file, move it to new ankimini config dir
+	if [ -f $OLDER_ANKI_DIR/$OLDER_CONFIG_FILE ]; then
+		mv --backup=numbered $OLDER_ANKI_DIR/$OLDER_CONFIG_FILE $NEW_ANKI_DIR/
+	fi
+
+	# if there's an old style config dir, try to move decks and config
+	if [ -d $OLD_ANKI_DIR ]; then
+		cd $OLD_ANKI_DIR
+		mv --backup=numbered $OLD_CONFIG_FILE $NEW_ANKI_DIR/$NEW_CONFIG_FILE
+		mv --backup=numbered *.anki *.anki-journal *.media $NEW_ANKI_DIR/
+		cd /
+		rmdir $OLD_ANKI_DIR
+	fi
+}
+
+fix_perms()
+{
+	# make sure perms are good on these
+	chown -R mobile:mobile $NEW_ANKI_DIR
+	find $NEW_ANKI_DIR -type f -exec chmod 644 {} \;
+	find $NEW_ANKI_DIR -type d -exec chmod 755 {} \;
+
+        chown -R mobile:mobile $APP_DIR/
+	find $APP_DIR -type f -exec chmod 644 {} \;
+	find $APP_DIR -type d -exec chmod 755 {} \;
+}
+
+
+if [[ $1 == configure ]]; then
+	relocate_old_config 2>/dev/null
+        fix_perms
+	launchctl load -w /Library/LaunchDaemons/net.ichi2.ankimini.plist
+else
+	fix_perms
+fi
+
+# At this stage, I don't want a failure, no matter what!
+exit 0

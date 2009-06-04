@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "$USER" = mobile ]; then
+	PYTHONPATH=$(dirname $0)/libanki exec python $(dirname $0)/main.py
+else
+	echo "Please run as user 'mobile'."
+fi

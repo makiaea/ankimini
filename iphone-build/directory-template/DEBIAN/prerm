@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# remove | upgrade | failed-upgrade | remove in-favour | deconfigure in-favour
+
+if [[ $1 == remove || $1 == upgrade ]]; then
+	launchctl stop net.ichi2.ankimini >/dev/null 2>&1
+	launchctl unload -w /Library/LaunchDaemons/net.ichi2.ankimini.plist >/dev/null 2>&1
+fi
+
+exit 0

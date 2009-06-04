@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>KeepAlive</key>
+	<false/>
+	<key>Label</key>
+	<string>net.ichi2.ankimini</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>--noediting</string>
+		<string>-c</string>
+		<string>/Applications/AnkiMini.app/ankimini</string>
+	</array>
+	<key>UserName</key>
+	<string>mobile</string>
+	<key>WorkingDirectory</key>
+	<string>/Applications/AnkiMini.app</string>
+        <key>RunAtLoad</key>
+        <true/>
+</dict>
+</plist>

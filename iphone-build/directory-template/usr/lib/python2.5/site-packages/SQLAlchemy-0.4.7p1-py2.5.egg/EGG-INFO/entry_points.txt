@@ -1,0 +1,8 @@
+[sqlalchemy.databases]
+sqlite = sqlalchemy.databases.sqlite:dialect
+firebird = sqlalchemy.databases.firebird:dialect
+mysql = sqlalchemy.databases.mysql:dialect
+oracle = sqlalchemy.databases.oracle:dialect
+mssql = sqlalchemy.databases.mssql:dialect
+postgres = sqlalchemy.databases.postgres:dialect
+
