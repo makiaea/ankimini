@@ -434,7 +434,7 @@ body { margin-top: 0px; padding: 0px; }
             newdeck.syncName = unicode(name)
             newdeck.lastLoaded = newdeck.modified
 
-	    self.syncDeck( newdeck )
+	    newdeck = self.syncDeck( newdeck )
 
             newdeck.save()
             if deck:
@@ -450,6 +450,8 @@ body { margin-top: 0px; padding: 0px; }
             buffer += "<em>Download failed!</em><br />"
             buffer += str(e)
             print "render_get_download(): exception: " + str(e)
+            import traceback
+            traceback.print_exc()
         finally:
             if tmp_dir:
                 try:
@@ -621,7 +623,7 @@ body { margin-top: 0px; padding: 0px; }
 			<html><head>
 			<meta name="viewport" content="user-scalable=yes, width=device-width, maximum-scale=0.6667" />
 			</head><body>""")
-                self.syncDeck( deck )
+                deck = self.syncDeck( deck )
                 self.flushWrite('<br><a href="/question">return</a>')
                 self.flushWrite("</body></html>")
             except Exception, e:
@@ -735,13 +737,18 @@ value="4">%(4)s</button></td>
         # summary
         self.lineWrite("Fetching summary from server..")
         sums = client.summaries()
-        # diff
-        self.lineWrite("Determining differences..")
-        payload = client.genPayload(sums)
-        # send payload
-        pr = client.payloadChangeReport(payload)
-        self.lineWrite("<br>" + pr + "<br>")
-        self.lineWrite("Sending payload...")
+        needFull = client.needFullSync(sums)
+        if needFull:
+            self.lineWrite("Doing full sync..")
+            client.fullSync()
+        else:
+            # diff
+            self.lineWrite("Determining differences..")
+            payload = client.genPayload(sums)
+            # send payload
+            pr = client.payloadChangeReport(payload)
+            self.lineWrite("<br>" + pr + "<br>")
+            self.lineWrite("Sending payload...")
 
 	# this can take a long time ... ensure the client doesn't timeout before we finish
 	from threading import Event, Thread
@@ -756,10 +763,13 @@ value="4">%(4)s</button></td>
 	ping_thread = Thread(target=ping_client)
 	ping_thread.start()
 
-        res = client.server.applyPayload(payload)
-        # apply reply
-        self.lineWrite("Applying reply..")
-        client.applyPayloadReply(res)
+        if needFull:
+            deck = ds.Deck(deck.path, backup=False)
+        else:
+            res = client.server.applyPayload(payload)
+            # apply reply
+            self.lineWrite("Applying reply..")
+            client.applyPayloadReply(res)
         # finished. save deck, preserving mod time
         self.lineWrite("Sync complete.")
         deck.rebuildQueue()
@@ -767,11 +777,11 @@ value="4">%(4)s</button></td>
         deck.s.flush()
         deck.s.commit()
 
-	# turn of client ping
+	# turn off client ping
 	ping_event.set()
         ping_thread.join(5)
 
-
+        return deck
 
     def getStats(self):
         s = deck.getStats()
@@ -797,8 +807,8 @@ value="4">%(4)s</button></td>
             if fullMatch.startswith("["):
                 if auto and (filename.lower().endswith(".mp3") or
                              filename.lower().endswith(".wav")):
-                    if not self.played:
-                        subprocess.Popen([PLAY_COMMAND,
+                    if not self.played and deck.mediaDir():
+                        subprocess.Popen([config.get('PLAY_COMMAND'),
                                           os.path.join(deck.mediaDir(), filename)])
                         self.played = True
                 string = re.sub(re.escape(fullMatch), "", string)
