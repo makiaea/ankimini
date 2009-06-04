@@ -18,24 +18,131 @@ from anki.media import mediaRefs
 from anki.utils import parseTags, joinTags
 from anki.facts import Fact
 
-configFile = os.path.expanduser("~/.ankimini-config.py")
-try:
-    execfile(configFile)
-except:
-    print "Can't read the config file. Did you install it?\n"
-    raise
 
-print "open deck.. " + DECK_PATH
-if not os.path.exists(DECK_PATH):
-    raise ValueError("Couldn't find your deck. Please check config.")
-deck = ds.Deck(DECK_PATH, backup=False)
-deck.s.execute("pragma cache_size = 1000")
 
-currentCard = None
+####### VERSIONS #########
 
-history = []
+from anki import version as VERSION_LIBANKI
+VERSION_ANKIMINI="1.1.8.rlc7"
+
+##########################
+
+ANKIMINI_PATH=os.path.join(os.path.expanduser("~/"),".anki")
+
+class Config(dict):
+    configFile = os.path.join(ANKIMINI_PATH,"ankimini-config.py")
+    re_matchComments = re.compile('#.*')
+    re_matchConfig = re.compile('\s*(\w+)\s*=([^#]*)')
+
+    def __init__(self, filename=None ):
+        dict.__init__(self)
+        self.setDefaults()
+        if filename:
+          self.configFile = filename
+
+    # setup some defaults in case problems reading config file
+    def setDefaults(self):
+        self['DEBUG_NETWORK']=False
+        self['SERVER_PORT']=8000
+        self['DECK_PATH']=os.path.join(ANKIMINI_PATH,"sample-deck.anki")
+        self['SYNC_USERNAME']="changeme"
+        self['SYNC_PASSWORD']="changeme"
+        self['PLAY_COMMAND']="play"
+
+    def loadConfig(self):
+        try:
+            import re
+            for line in open(self.configFile,"r").readlines():
+                line = self.re_matchComments.sub("", line)		# remove comments
+                match = self.re_matchConfig.match(line)
+                if match:
+                    k = match.group(1)
+                    v = match.group(2)
+                    self[k] = eval(v)
+        except Exception, e:
+            print "Can't read the config file. Did you install it?\n"
+            print e
+            print "Reverting to defaults\n"
+            self.setDefaults()
+            self.saveConfig()
+    #end loadConfig()
+
+    def saveConfig(self):
+        outfile = open(self.configFile, "w")
+        outfile.write("# auto generated, manual changes may be overwritten\n")
+        for k in self.keys():
+            outfile.write( "%s=%s\n" % (k, repr(self[k])) )
+        outfile.close()
+    #end save()
+
+
+
+def expandDeckName( raw, base_dir=ANKIMINI_PATH ):
+    if raw[0] == '/':
+        canonical = raw
+    else:
+        canonical = os.path.join(base_dir, raw)
+
+    if canonical[-5:] != ".anki":
+        canonical += ".anki"
+
+    return canonical
+# expandDeckName()
+
+def openDeck(deckPath=None):
+    global config
+    try:
+        if deckPath is None:
+            deckPath = config['DECK_PATH']
+        deckPath = expandDeckName(deckPath)
+        print "open deck.. " + deckPath
+        if not os.path.exists(deckPath):
+            raise ValueError("Couldn't find deck " % (deckPath,) )
+        deck = ds.Deck(deckPath, backup=False)
+        deck.s.execute("pragma cache_size = 1000")
+    except Exception, e:
+        print "Error loading deck"
+        print e
+        deck = None
+    return deck
+#end openDeck()
+
+def switchDeck( olddeck, newdeck_name ):
+    global config
+    newdeck_path = expandDeckName(newdeck_name)
+    if olddeck:
+        olddeck.save()
+        if newdeck_path == olddeck.path:
+            raise Exception( "Deck %s already active." % ( newdeck_path, ) )
+        print "switching from %s to %s" % ( olddeck.path, newdeck_path )
+
+    newdeck = openDeck(newdeck_path)
+    if olddeck:
+        olddeck.close()
+    return newdeck
+# switchDeck()
+
+
+##################
 
 class Handler(SimpleHTTPRequestHandler):
+    def setup(self):
+       SimpleHTTPRequestHandler.setup(self)
+       if config.get('DEBUG_NETWORK') == True:
+           class FileProxy:
+               file=None
+               def __init__(self, file):
+                   self.file=file
+               def write(self,data):
+                   print data
+                   self.file.write(data)
+               def __getattr__(self, name):
+                   return getattr(self.file, name)
+               def __setattr__(self, name, value):
+                   if name in dir(self): self.__dict__[name] = value
+                   else: setattr(self.file, name, value)
+
+           self.wfile = FileProxy(self.wfile)
 
     def _outer(self):
         return """
@@ -44,7 +151,7 @@ class Handler(SimpleHTTPRequestHandler):
 <title>Anki</title>
 <link rel="apple-touch-icon" href="http://ichi2.net/anki/anki-iphone-logo.png"/>
 <meta name="viewport" content="user-scalable=yes, width=device-width,
-    maximum-scale=0.6667" />
+  initial-scale=0.6667" />
 <script type="text/javascript" language="javascript">
 <!--
 window.addEventListener("load", function() { setTimeout(loaded, 100) }, false);
@@ -60,11 +167,11 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 </body></html>"""
 
     def _top(self):
-        if deck.modifiedSinceSave():
+        if deck and deck.modifiedSinceSave():
             saveClass="medButtonRed"
         else:
             saveClass="medButton"
-        if currentCard and deck.s.scalar(
+        if deck and currentCard and deck.s.scalar(
             "select 1 from facts where id = :id and tags like '%marked%'",
             id=currentCard.factId):
             markClass = "medButtonRed"
@@ -72,13 +179,10 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             markClass = "medButton"
         if self.errorMsg:
             self.errorMsg = '<p style="color: red">' + self.errorMsg + "</p>"
-        stats = self.getStats()
-        if currentCard:
-            background = deck.s.scalar(
-                "select lastFontColour from cardModels where id = :id",
-                id=currentCard.cardModelId)
+        if deck:
+            stats = self.getStats()
         else:
-            background = "#ffffff"
+            stats = ("","")
         return """
 <html>
 <head>
@@ -94,11 +198,10 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 .medButtonRed
 { font-size: 18px; width: 100px; height: 40px; padding: 5px; color: #FF0000; }
 .q
-{ font-size: 30px; }
+{ font-size: 30px; color:#0000ff;}
 .a
 { font-size: 30px; }
 body { margin-top: 0px; padding: 0px; }
-%s
 </style>
 </head>
 <body>
@@ -120,27 +223,322 @@ body { margin-top: 0px; padding: 0px; }
 <td align=right>
 <form action="/sync" method="get">
 <input class="medButton" type="submit" class="button" value="Sync">
-</form></td></tr></table>
+</form></td>
+<td align=right>
+</tr></table>
 %s
-<div style='background: %s'>
-""" % (deck.css, stats[0], stats[1], saveClass, markClass, self.errorMsg,
-       background)
+""" % (stats[0], stats[1], saveClass, markClass, self.errorMsg)
 
     _bottom = """
-</form>
-</div>
+<br />
+<br />
+<br />
+<table width="100%%"><tr valign=middle>
+<td align=left>
+<form action="/config" method="get">
+<input class="medButton" type="submit" class="button" value="Config">
+</form></td>
+<td align=left>
+<form action="/local" method="get">
+<input class="medButton" type="submit" class="button" value="Local">
+</form></td>
+<td align=right>
+<form action="/personal" method="get">
+<input class="medButton" type="submit" class="button" value="Online">
+</form></td>
+<td align=right>
+<form action="/about" method="get">
+<input class="medButton" type="submit" class="button" value="About">
+</form></td>
+</table>
 </body>
 </html>"""
 
     def flushWrite(self, msg):
-        self.wfile.write(msg + "<br>\n")
+        self.wfile.write(msg+"\n")
         self.wfile.flush()
 
+    def lineWrite(self, msg):
+        self.flushWrite("<br />"+msg)
+
+######################
+
+    def render_get_config(self):
+        global config
+        buffer = """
+		<html>
+		<head><title>Config</title></head>
+		<body>
+		<h1>Config</h1>
+		 <form action="/config" method="POST">
+		  <fieldset><legend>Sync details</legend>
+		   <label for="username">User name</label> <input id="username" type="text" name="username" value="%s" autocorrect="off" autocapitalize="off" /> <br />
+		   <label for="password">Password</label>  <input id="password" type="password" name="password" value="%s" autocorrect="off" autocapitalize="off" />
+		  </fieldset>
+		  <fieldset><legend>Deck</legend>
+		   <label for="deckpath">Deck</label>  <input id="deckpath" type="text" name="deckpath" value="%s" autocorrect="off" autocapitalize="off" />
+                   <em>(port change doesn't take effect until a server restart)</em>
+		  </fieldset>
+		  <fieldset><legend>Misc details</legend>
+		   <label for="play">Play command</label>  <input id="play" type="text" name="play" value="%s" autocorrect="off" autocapitalize="off" /> <br />
+		   <label for="port">Server port</label>  <input id="port" type="text" name="port" value="%s" autocorrect="off" autocapitalize="off" />
+                   <em>(port change doesn't take effect until a server restart)</em>
+		  </fieldset>
+		  <fieldset class="submit">
+		   <input type="submit" class="button" value="Save Config">
+		  </fieldset>
+		 </form>
+		 <br /><a href="/question">return</a>
+		</body>
+		</html>
+        """ % ( config.get('SYNC_USERNAME',''), config.get('SYNC_PASSWORD',''), config.get('DECK_PATH',''),
+                 config.get('PLAY_COMMAND',''), config.get('SERVER_PORT','') )
+
+        return buffer
+####################### end render_get_config
+
+    def render_post_config(self, params):
+        global config
+        buffer = "<html><head><title>Config ...</title></head>"
+        errorMsg = ""
+        try:
+            username = unicode(params['username'][0], 'utf-8')
+            password = unicode(params['password'][0], 'utf-8')
+            deckpath = unicode(params['deckpath'][0], 'utf-8')
+            port = int(params['port'][0])
+            play = unicode(params['play'][0], 'utf-8')
+
+            config.update( { 'SYNC_USERNAME': username, 'SYNC_PASSWORD': password,
+                              'SERVER_PORT': port, 'PLAY_COMMAND': play } )
+            config.saveConfig()
+            try:
+                global deck
+                deck = switchDeck( deck, deckpath )
+                conifg['DECK_PATH']=deck.path
+                config.saveConfig()
+                deck.rebuildQueue()
+            except Exception, e:
+                errorMsg += "<br /><br />Deck didn't change: " + str(e)
+
+            obscured = '*' * len(password)
+            buffer += """
+		<em>Config saved</em> <br />
+		username = %s <br />
+		password = %s <br />
+                port = %d <br />
+                play = %s <br />
+                %s
+		""" % ( username, obscured, port, play, errorMsg )
+        except Exception, e:
+            buffer += "<em>Config save may have failed!  Please check the values and try again</em><br />"
+            buffer += str(e)
+
+        buffer += """
+		<br /><a href="/question">return</a>
+		</body></html>
+		"""
+
+        return buffer
+####################### end render_post_config
+
+    def render_get_local(self):
+        import glob
+        buffer = """
+		<html>
+		<head><title>List local decks</title></head>
+		<body>
+		<h1>Local Decks</h1>
+		"""
+        try:
+            deckList = [ f[:-5] for f in glob.glob(os.path.join(ANKIMINI_PATH,"*.anki")) ]
+            if deckList is None or len(deckList)==0:
+                buffer += "<em>You have no local decks!</em>"
+            else:
+                buffer += '<table width="100%%" cellspacing="10">'
+                for d in deckList:
+                   	buffer += '<tr><td><a href="/switch?d=%s&i=y">%s</a></td></tr>' % ( d, d )
+                buffer += "</table>"
+        except Exception, e:
+            buffer += "<em>Error listing files!</em><br />" + str(e)
+
+        buffer += """
+		<br /><a href="/question">return</a>
+		</body>
+		</html>
+	        """
+
+        return buffer
+####################### end render_get_local
+
+    def render_get_personal(self):
+        global config
+        buffer = """
+		<html>
+		<head><title>List personal decks</title></head>
+		<body>
+		<h1>Online Personal Decks</h1>
+		Please select one to download it...
+		"""
+        try:
+            proxy = HttpSyncServerProxy(config.get('SYNC_USERNAME'), config.get('SYNC_PASSWORD'))
+            deckList = proxy.availableDecks()
+            if deckList is None or len(deckList)==0:
+                buffer += "<em>You have no online decks!</em>"
+            else:
+                buffer += '<table width="100%%" cellspacing="10">'
+                for d in deckList:
+                   	buffer += '<tr height><td><a href="/download?deck=%s">%s</a></td></tr>' % ( d, d )
+                buffer += "</table>"
+        except:
+            buffer += "<em>Can't connect - check username/password</em>"
+
+        buffer += """
+		<br /><a href="/question">return</a>
+		</body>
+		</html>
+	        """
+
+        return buffer
+####################### end render_get_personal
+
+    def render_get_download(self, params):
+        global deck
+        global config
+        global ANKIMINI_PATH
+
+        import tempfile
+
+        name = params["deck"]
+        self.wfile.write( """
+		<html>
+		<head><title>Downloading %s ...</title></head>
+		<body>
+		""" % ( name ) )
+        buffer=""
+
+        tmp_dir=None
+        try:
+            if deck:
+                deck.save()
+            local_deck = expandDeckName(name)
+            if os.path.exists(local_deck):
+                raise Exception("Local deck %s already exists.  You can't overwrite, sorry!" % (name,))
+
+            tmp_dir = unicode(tempfile.mkdtemp(dir=ANKIMINI_PATH, prefix="anki"), sys.getfilesystemencoding())
+            tmp_deck = expandDeckName(name, tmp_dir)
+
+            newdeck = ds.Deck(tmp_deck)
+            newdeck.s.execute("pragma cache_size = 1000")
+            newdeck.modified = 0
+            newdeck.s.commit()
+            newdeck.syncName = unicode(name)
+            newdeck.lastLoaded = newdeck.modified
+
+	    self.syncDeck( newdeck )
+
+            newdeck.save()
+            if deck:
+                deck.close()
+                deck = None
+            newdeck.close()
+            os.rename(tmp_deck, local_deck)
+            config['DECK_PATH']=local_deck
+            config.saveConfig()
+            deck = openDeck()
+
+        except Exception, e:
+            buffer += "<em>Download failed!</em><br />"
+            buffer += str(e)
+            print "render_get_download(): exception: " + str(e)
+        finally:
+            if tmp_dir:
+                try:
+                    os.remove(tmp_deck)
+                    os.remove(tmp_deck+"-journal")
+                except:
+                    pass
+                try:
+                    os.rmdir(tmp_dir)
+                except:
+                    pass
+
+        buffer += """
+		<br />
+		<a href="/question">return</a>
+		</body></html>
+		"""
+
+        return buffer
+####################### end render_get_download
+
+    def render_get_about(self):
+        global deck
+        global config
+
+        obscured='*' * len(config.get('SYNC_PASSWORD',''))
+        buffer = """
+            <html>
+            <head><title>About</title></head>
+            <body>
+            <h1>AnkiMini v%s</h1>
+            <h2>Currently Loaded Deck</h2>
+            %s
+            <h2>Versions</h2>
+            <table width="100%%">
+		<tr><th align="left">Component</th><th align="left">Version</th></tr>
+                <tr><td>Ankimini</td><td>%s</td></tr>
+                <tr><td>libanki</td><td>%s</td></tr>
+            </table>
+            <h2>Current config</h2>
+            <table width="100%%">
+                <tr><td>Config path</td><td>%s</td></tr>
+                <tr><td>Deck path</td><td>%s</td></tr>
+                <tr><td>Sync user</td><td>%s</td></tr>
+                <tr><td>Sync pass</td><td>%s</td></tr>
+                <tr><td>Server port</td><td>%s</td></tr>
+                <tr><td>Play command</td><td>%s</td></tr>
+            </table>
+            <p>For more info on Anki, visit the <a href="http://ichi2.net/anki">home page</a></p>
+	    <br /><a href="/question">return</a>
+            </body>
+            </html>
+        """ % ( VERSION_ANKIMINI,
+		deck.path if deck is not None else 'None',
+		VERSION_ANKIMINI, VERSION_LIBANKI,
+		config.configFile, config.get('DECK_PATH'), config.get('SYNC_USERNAME'),
+                     obscured, config.get('SERVER_PORT'), config.get('PLAY_COMMAND'),
+              )
+
+        return buffer
+####################### end render_get_about
+
+    def do_POST(self):
+        history.append(self.path)
+        serviceStart = time.time()
+        self.send_response(200)
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.end_headers()
+
+        length = int(self.headers.getheader('content-length'))
+        qs = self.rfile.read(length)
+        params = cgi.parse_qs(qs, keep_blank_values=1)
+
+        if self.path.startswith("/config"):
+	    buffer = self.render_post_config(params)
+
+        self.wfile.write(buffer.encode("utf-8") + "\n")
+        print "service time", time.time() - serviceStart
+    #end do_POST()
+
     def do_GET(self):
+        global config
         self.played = False
         lp = self.path.lower()
         def writeImage():
-            self.wfile.write(open(os.path.join(deck.mediaDir(), lp[1:])).read())
+            try:
+                self.wfile.write(open(os.path.join(deck.mediaDir(), lp[1:])).read())
+            except:
+                pass
         if lp.endswith(".jpg"):
             self.send_response(200)
             self.send_header("Content-type", "image/jpeg")
@@ -173,30 +571,28 @@ body { margin-top: 0px; padding: 0px; }
         buffer = u""
 
         if self.path.startswith("/switch"):
-            new = query.get("d", DECK_PATH)
-            success = False
+            new = query.get("d", config.get('DECK_PATH',''))
             try:
-                newdeck = ds.Deck(os.path.join(
-                    os.path.dirname(DECK_PATH),
-                    new))
-                newdeck.s.execute("pragma cache_size = 1000")
-                success = True
-            except:
-                pass
-            if success:
-                deck.save()
-                deck.close()
-                deck = newdeck
-            self.path = "/"
+                deck = switchDeck(deck, new)
+                config['DECK_PATH']=deck.path
+                config.saveConfig()
+                deck.rebuildQueue()
+            except Exception, e:
+                self.errorMsg = str(e)
+            if query.get("i"):
+                self.path="/question"
+            else:
+                self.path="/"
 
         if self.path == "/":
             # refresh
-            deck.rebuildQueue()
+            if deck:
+                deck.rebuildQueue()
             self.flushWrite(self._outer())
-        elif self.path.startswith("/save"):
+        elif deck and self.path.startswith("/save"):
             deck.save()
             self.path = "/question"
-        elif self.path.startswith("/mark"):
+        elif deck and self.path.startswith("/mark"):
             f = deck.s.query(Fact).get(currentCard.factId)
             if "marked" in f.tags.lower():
                 t = parseTags(f.tags)
@@ -210,112 +606,71 @@ body { margin-top: 0px; padding: 0px; }
             deck.s.flush()
             deck.s.expunge(f)
             history.pop()
-            self.path = history[-1]
-        elif self.path.startswith("/replay"):
+            self.path = "/question"
+        elif deck and self.path.startswith("/replay"):
             self.prepareMedia(currentCard.question)
             self.prepareMedia(currentCard.answer)
             history.pop()
-            self.path = history[-1]
-        elif self.path.startswith("/sync"):
+            self.path = "/question"
+        elif deck and self.path.startswith("/sync"):
             deck.save()
             deck.lastLoaded = time.time()
             # syncing
-            while 1:
-                proxy = HttpSyncServerProxy(SYNC_USERNAME, SYNC_PASSWORD)
-                try:
-                    proxy.connect("ankimini")
-                except:
-                    self.errorMsg = "Can't sync - check username/password"
-                    self.path = "/question"
-                    break
-                if not proxy.hasDeck(deck.syncName):
-                    self.errorMsg = "Can't sync, no deck on server"
-                    self.path = "/question"
-                    break
-                if abs(proxy.timestamp - time.time()) > 60:
-                    self.flushWrite(
-                        "Your clock is off by more than 60 seconds.<br>"
-                        "Syncing will not work until you fix this.")
-                    return
-
-                client = SyncClient(deck)
-                client.setServer(proxy)
-                # need to do anything?
-                proxy.deckName = deck.syncName
-                if not client.prepareSync():
-                    self.errorMsg = "Nothing to do"
-                    self.path = "/question"
-                    break
-                # summary
+            try:
                 self.flushWrite("""
-<html><head>
-<meta name="viewport" content="user-scalable=yes, width=device-width,
-    maximum-scale=0.6667" />
-</head><body>\n""")
-                self.flushWrite("Fetching summary from server..")
-                sums = client.summaries()
-                # diff
-                self.flushWrite("Determining differences..")
-                payload = client.genPayload(sums)
-                # send payload
-                pr = client.payloadChangeReport(payload)
-                self.flushWrite("<br>" + pr + "<br>")
-                self.flushWrite("Sending payload...")
-                res = client.server.applyPayload(payload)
-                # apply reply
-                self.flushWrite("Applying reply..")
-                client.applyPayloadReply(res)
-                # finished. save deck, preserving mod time
-                self.flushWrite("Sync complete.")
-                deck.rebuildQueue()
-                deck.lastLoaded = deck.modified
-                deck.s.flush()
-                deck.s.commit()
+			<html><head>
+			<meta name="viewport" content="user-scalable=yes, width=device-width, maximum-scale=0.6667" />
+			</head><body>""")
+                self.syncDeck( deck )
                 self.flushWrite('<br><a href="/question">return</a>')
-                self.wfile.write("</body></html>")
-                self.wfile.flush()
-                break
+                self.flushWrite("</body></html>")
+            except Exception, e:
+                self.errorMsg = str(e)
+                self.path = "/question"
+
 
         if self.path.startswith("/question"):
-            # possibly answer old card
-            if (q is not None and
-                currentCard and mod == str(int(currentCard.modified))):
-                deck.answerCard(currentCard, int(q))
-            # get new card
-            c = deck.getCard(orm=False)
-            if not c:
-                buffer += (self._top() +
-                           deck.deckFinishedMsg())
+            if not deck:
+                self.errorMsg = "No deck opened! Check config is correct."
+                buffer += (self._top() + self._bottom)
             else:
-                currentCard = c
-                buffer += (self._top() + ("""
+                # possibly answer old card
+                if (q is not None and
+                    currentCard and mod == str(int(currentCard.modified))):
+                    deck.answerCard(currentCard, int(q))
+                # get new card
+                c = deck.getCard(orm=False)
+                if not c:
+                    buffer += (self._top() +
+                               deck.deckFinishedMsg() +
+                               self._bottom)
+                else:
+                    currentCard = c
+                    buffer += (self._top() + ("""
 <br><div class="q">%(question)s</div>
-<br>
-</div>
-<br>
+<br><br>
 <form action="/answer" method="get">
 <input class="bigButton" type="submit" class="button" value="Answer">
+</form>
 """ % {
-        "question": self.prepareMedia(c.htmlQuestion(align=False)),
+        "question": self.prepareMedia(c.question),
         }))
-                buffer += (self._bottom)
+                    buffer += (self._bottom)
         elif self.path.startswith("/answer"):
             if not currentCard:
                 currentCard = deck.getCard(orm=False)
             c = currentCard
             buffer += (self._top() + """
 <br>
-<div class="q">%(question)s</div><br>
+<div class="q">%(question)s</div>
 <div class="a">%(answer)s</div>
-<br>
-</div>
-<br><form action="/question" method="get">
+<br><br><form action="/question" method="get">
 <input type="hidden" name="mod" value="%(mod)d">
 <table width="100%%">
 <tr>
 """ % {
-    "question": self.prepareMedia(c.htmlQuestion(align=False), auto=False),
-    "answer": self.prepareMedia(c.htmlAnswer(align=False)),
+    "question": self.prepareMedia(c.question, auto=False),
+    "answer": self.prepareMedia(c.answer),
     "mod": c.modified,
     })
             ints = {}
@@ -331,10 +686,92 @@ value="3">%(3)s</button></td>
 <td><button class="easeButton" type="submit" class="button" name="q"
 value="4">%(4)s</button></td>
 """ % ints)
-            buffer += ("</tr></table>")
+            buffer += ("</tr></table></form>")
             buffer += (self._bottom)
+
+        elif self.path.startswith("/config"):
+	    buffer = self.render_get_config()
+	elif self.path.startswith("/local"):
+	    buffer = self.render_get_local()
+	elif self.path.startswith("/personal"):
+	    buffer = self.render_get_personal()
+	elif self.path.startswith("/download"):
+	    buffer = self.render_get_download(query)
+	elif self.path.startswith("/about"):
+	    buffer = self.render_get_about()
+		
         self.wfile.write(buffer.encode("utf-8") + "\n")
         print "service time", time.time() - serviceStart
+
+########################
+
+    def syncDeck(self, deck):
+        try:
+            proxy = HttpSyncServerProxy(config.get('SYNC_USERNAME'), config.get('SYNC_PASSWORD'))
+            proxy.connect("ankimini")
+        except:
+            raise Exception("Can't sync - check username/password")
+        if not proxy.hasDeck(deck.syncName):
+            raise Exception("Can't sync, no deck on server")
+        if abs(proxy.timestamp - time.time()) > 60:
+            raise Exception("Your clock is off by more than 60 seconds.<br>" \
+                            "Syncing will not work until you fix this.")
+
+        client = SyncClient(deck)
+        client.setServer(proxy)
+        # need to do anything?
+        proxy.deckName = deck.syncName
+        if not client.prepareSync():
+            raise Exception("Nothing to do")
+
+	self.flushWrite("""<h1>Syncing deck</h1>
+        <h2%s</h2>
+	<em>This could take a while with a big deck ... please be patient!</em>
+	""" % (deck.path,) )
+
+        # hack to get safari to render immediately!
+        self.flushWrite("<!--" + " "*1024 + "-->")
+
+        # summary
+        self.lineWrite("Fetching summary from server..")
+        sums = client.summaries()
+        # diff
+        self.lineWrite("Determining differences..")
+        payload = client.genPayload(sums)
+        # send payload
+        pr = client.payloadChangeReport(payload)
+        self.lineWrite("<br>" + pr + "<br>")
+        self.lineWrite("Sending payload...")
+
+	# this can take a long time ... ensure the client doesn't timeout before we finish
+	from threading import Event, Thread
+	ping_event = Event()
+        def ping_client( s = self.wfile, ev=ping_event ):
+            while 1:
+                ev.wait(3)
+                if ev.isSet():
+                    return
+                s.write(".<!--\n-->")
+                s.flush()
+	ping_thread = Thread(target=ping_client)
+	ping_thread.start()
+
+        res = client.server.applyPayload(payload)
+        # apply reply
+        self.lineWrite("Applying reply..")
+        client.applyPayloadReply(res)
+        # finished. save deck, preserving mod time
+        self.lineWrite("Sync complete.")
+        deck.rebuildQueue()
+        deck.lastLoaded = deck.modified
+        deck.s.flush()
+        deck.s.commit()
+
+	# turn of client ping
+	ping_event.set()
+        ping_thread.join(5)
+
+
 
     def getStats(self):
         s = deck.getStats()
@@ -356,8 +793,6 @@ value="4">%(4)s</button></td>
         return (stats, stats2)
 
     def prepareMedia(self, string, auto=True):
-        if not deck.mediaDir():
-            return string
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
                 if auto and (filename.lower().endswith(".mp3") or
@@ -376,9 +811,22 @@ value="4">%(4)s</button></td>
 
 def run(server_class=HTTPServer,
         handler_class=Handler):
-    server_address = ('', SERVER_PORT)
+    global config
+    server_address = ('127.0.0.1', config.get('SERVER_PORT',8000))		# explicit 127.0.0.1 so that delays aren't experienced if wifi/3g networks are not reliable
     httpd = server_class(server_address, handler_class)
     httpd.serve_forever()
 
-print "starting server on port %d" % SERVER_PORT
-run()
+
+
+######## main
+
+if __name__ == '__main__':
+    config = Config()
+    config.loadConfig()
+    deck = openDeck()
+    currentCard = None
+    history = []
+    print "starting server on port %d" % config.get('SERVER_PORT',8000)
+    run()
+
+
