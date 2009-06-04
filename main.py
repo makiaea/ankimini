@@ -94,10 +94,11 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 .medButtonRed
 { font-size: 18px; width: 100px; height: 40px; padding: 5px; color: #FF0000; }
 .q
-{ font-size: 30px; color:#0000ff;}
+{ font-size: 30px; }
 .a
 { font-size: 30px; }
 body { margin-top: 0px; padding: 0px; }
+%s
 </style>
 </head>
 <body>
@@ -122,7 +123,7 @@ body { margin-top: 0px; padding: 0px; }
 </form></td></tr></table>
 %s
 <div style='background: %s'>
-""" % (stats[0], stats[1], saveClass, markClass, self.errorMsg,
+""" % (deck.css, stats[0], stats[1], saveClass, markClass, self.errorMsg,
        background)
 
     _bottom = """
@@ -295,7 +296,7 @@ body { margin-top: 0px; padding: 0px; }
 <form action="/answer" method="get">
 <input class="bigButton" type="submit" class="button" value="Answer">
 """ % {
-        "question": self.prepareMedia(c.question),
+        "question": self.prepareMedia(c.htmlQuestion(align=False)),
         }))
                 buffer += (self._bottom)
         elif self.path.startswith("/answer"):
@@ -304,7 +305,7 @@ body { margin-top: 0px; padding: 0px; }
             c = currentCard
             buffer += (self._top() + """
 <br>
-<div class="q">%(question)s</div>
+<div class="q">%(question)s</div><br>
 <div class="a">%(answer)s</div>
 <br>
 </div>
@@ -313,8 +314,8 @@ body { margin-top: 0px; padding: 0px; }
 <table width="100%%">
 <tr>
 """ % {
-    "question": self.prepareMedia(c.question, auto=False),
-    "answer": self.prepareMedia(c.answer),
+    "question": self.prepareMedia(c.htmlQuestion(align=False), auto=False),
+    "answer": self.prepareMedia(c.htmlAnswer(align=False)),
     "mod": c.modified,
     })
             ints = {}
