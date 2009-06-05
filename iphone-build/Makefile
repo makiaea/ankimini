@@ -28,7 +28,10 @@ AnkiMini:
 	@echo "Copying ankimini v$(UPSTREAM_VERSION)"
 	-mv AnkiMini AnkiMini.old
 	cp -rp directory-template AnkiMini
-	cp -rp $(LIBANKI_SOURCE_DIR)/libanki $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
+	cp -rp $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
+	# avoid copying .git
+	cp -rp $(LIBANKI_SOURCE_DIR)/libanki/* AnkiMini/Applications/AnkiMini.app/libanki/
+
 
 AnkiMini-$(DEB_VERSION).deb: AnkiMini $(DEBIAN_CONTROL_FILE)
 	echo "Making $@"

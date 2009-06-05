@@ -23,7 +23,7 @@ from anki.facts import Fact
 ####### VERSIONS #########
 
 from anki import version as VERSION_LIBANKI
-VERSION_ANKIMINI="1.1.8.rlc7"
+VERSION_ANKIMINI="1.1.8.rlc8"
 
 ##########################
 
