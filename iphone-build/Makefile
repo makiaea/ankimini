@@ -1,6 +1,7 @@
 # location of ankimini source dir.  We need libank, main.py and timings.py in this dir.
 # default is ..
 ANKIMINI_SOURCE_DIR=..
+LIBANKI_SOURCE_DIR=../..
 
 DEB_VERSION=0.19
 UPSTREAM_VERSION=$(shell grep VERSION_ANKIMINI= $(ANKIMINI_SOURCE_DIR)/main.py  | cut -d'"' -f2)
@@ -27,7 +28,7 @@ AnkiMini:
 	@echo "Copying ankimini v$(UPSTREAM_VERSION)"
 	-mv AnkiMini AnkiMini.old
 	cp -rp directory-template AnkiMini
-	cp -rp $(ANKIMINI_SOURCE_DIR)/libanki $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
+	cp -rp $(LIBANKI_SOURCE_DIR)/libanki $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
 
 AnkiMini-$(DEB_VERSION).deb: AnkiMini $(DEBIAN_CONTROL_FILE)
 	echo "Making $@"
