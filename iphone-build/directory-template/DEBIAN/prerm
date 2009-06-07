@@ -5,6 +5,8 @@
 if [[ $1 == remove || $1 == upgrade ]]; then
 	launchctl stop net.ichi2.ankimini >/dev/null 2>&1
 	launchctl unload -w /Library/LaunchDaemons/net.ichi2.ankimini.plist >/dev/null 2>&1
+	find /Applications/AnkiMini.app -type f -name '*.pyc' -exec rm {} \; >/dev/null 2>&1
+	find /usr/lib/python2.5/site-packages/SQLAlchemy* -type f -name '*.pyc' -exec rm {} \; >/dev/null 2>&1
 fi
 
 exit 0

@@ -3,7 +3,7 @@
 ANKIMINI_SOURCE_DIR=..
 LIBANKI_SOURCE_DIR=../..
 
-DEB_VERSION=0.19
+DEB_VERSION=0.23
 UPSTREAM_VERSION=$(shell grep VERSION_ANKIMINI= $(ANKIMINI_SOURCE_DIR)/main.py  | cut -d'"' -f2)
 
 # debian control file package details
@@ -31,7 +31,6 @@ AnkiMini:
 	cp -rp $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
 	# avoid copying .git
 	cp -rp $(LIBANKI_SOURCE_DIR)/libanki/* AnkiMini/Applications/AnkiMini.app/libanki/
-
 
 AnkiMini-$(DEB_VERSION).deb: AnkiMini $(DEBIAN_CONTROL_FILE)
 	echo "Making $@"

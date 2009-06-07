@@ -27,27 +27,13 @@ relocate_old_config()
 	fi
 }
 
-fix_perms()
-{
-	# make sure perms are good on these
-	chown -R mobile:mobile $NEW_ANKI_DIR
-	find $NEW_ANKI_DIR -type f -exec chmod 644 {} \;
-	find $NEW_ANKI_DIR -type d -exec chmod 755 {} \;
-
-        chown -R mobile:mobile $APP_DIR/
-	find $APP_DIR -type f -exec chmod 644 {} \;
-	find $APP_DIR -type d -exec chmod 755 {} \;
-        chmod 755 $APP_DIR/ankimini
-        chmod 755 $APP_DIR/AnkiMini
-}
-
-
 if [[ $1 == configure ]]; then
 	relocate_old_config 2>/dev/null
-        fix_perms
+        /bin/sh $APP_DIR/fixperms.sh
+        # compile sqlalchemy
+        python -c 'import sqlalchemy'
+	# start ankimini as a service
 	launchctl load -w /Library/LaunchDaemons/net.ichi2.ankimini.plist
-else
-	fix_perms
 fi
 
 # At this stage, I don't want a failure, no matter what!
