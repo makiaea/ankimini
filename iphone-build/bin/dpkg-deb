@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# A simple replacement for dpkg-deb --build <dir>
+#
+# This is useful for sites/distros without dpkg.
+#
+
+progname=$(basename $0)
+wdir=$PWD
+tmpdir=$PWD/.$progname.$$
+trap 'rm -r $tmpdir' 0 1 2 3 15
+usage()
+{
+  echo "$@"
+  echo "usage: $0 -b|--build <dir>"
+  echo "Emulates official dpkg-deb tool"
+  exit 1
+}
+
+if [ $# -eq 2 ]; then
+  [ "$1" != "-b" -a "$1" != "--build" ] && usage "First arg must be -b or --build"
+  dir="$2"
+else
+  usage "Wrong number of args"
+fi
+
+[ -d "$dir" ] || usage "<dir> must be an existing directory"
+[ -f "$dir/DEBIAN/control" ] || usage "Couldn't locate $dir/DEBIAN/control"
+
+mkdir -p "$tmpdir" || usage "Failed to create temp directory $tmpdir"
+
+( cd "$dir/DEBIAN" ; tar -cf - . | gzip -9 >"$tmpdir"/control.tar.gz )
+( cd "$dir" ; tar --exclude DEBIAN -cf - . | gzip -9 >"$tmpdir"/data.tar.gz )
+echo '2.0' >"$tmpdir"/debian-binary
+
+( cd "$tmpdir" ; ar cq "$wdir/$dir.deb" debian-binary control.tar.gz data.tar.gz )

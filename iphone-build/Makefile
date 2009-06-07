@@ -34,7 +34,7 @@ AnkiMini:
 
 AnkiMini-$(DEB_VERSION).deb: AnkiMini $(DEBIAN_CONTROL_FILE)
 	echo "Making $@"
-	dpkg-deb -b AnkiMini
+	PATH=$$PATH:bin dpkg-deb -b AnkiMini
 	mv --backup=numbered AnkiMini.deb $@
 
 Packages-$(DEB_VERSION): $(DEBIAN_CONTROL_FILE) AnkiMini-$(DEB_VERSION).deb
