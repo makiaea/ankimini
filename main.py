@@ -23,7 +23,7 @@ from anki.facts import Fact
 ####### VERSIONS #########
 
 from anki import version as VERSION_LIBANKI
-VERSION_ANKIMINI="1.1.8.rlc8"
+VERSION_ANKIMINI="1.1.8.rlc9"
 
 ##########################
 
@@ -76,6 +76,11 @@ class Config(dict):
     #end save()
 
 
+def human_readable_size( num ):
+    for x in ['bytes','KB','MB','GB','TB']:
+        if num < 1024.0:
+            return "%3.1f%s" % (num, x)
+        num /= 1024.0
 
 def expandDeckName( raw, base_dir=ANKIMINI_PATH ):
     if raw[0] == '/':
@@ -97,7 +102,7 @@ def openDeck(deckPath=None):
         deckPath = expandDeckName(deckPath)
         print "open deck.. " + deckPath
         if not os.path.exists(deckPath):
-            raise ValueError("Couldn't find deck " % (deckPath,) )
+            raise ValueError("Couldn't find deck %s" % (deckPath,) )
         deck = ds.Deck(deckPath, backup=False)
         deck.s.execute("pragma cache_size = 1000")
     except Exception, e:
@@ -211,7 +216,7 @@ body { margin-top: 0px; padding: 0px; }
 %s
 </style>
 </head>
-<body>
+<body id="inner_top">
 <table width="100%%">
 <tr valign=middle><td align=left>%s</td>
 <td align=right>%s</td></table>
@@ -235,8 +240,8 @@ body { margin-top: 0px; padding: 0px; }
 </tr></table>
 %s
 <div style='background: %s'>
-""" % (deck.css, stats[0], stats[1], saveClass, markClass, self.errorMsg,
-       background)
+""" % (deck.css if deck is not None else "", stats[0], stats[1], saveClass,
+       markClass, self.errorMsg, background)
 
     _bottom = """
 <br />
@@ -297,7 +302,7 @@ body { margin-top: 0px; padding: 0px; }
 		   <input type="submit" class="button" value="Save Config">
 		  </fieldset>
 		 </form>
-		 <br /><a href="/question">return</a>
+		 <br /><a href="/question#inner_top">return</a>
 		</body>
 		</html>
         """ % ( config.get('SYNC_USERNAME',''), config.get('SYNC_PASSWORD',''), config.get('DECK_PATH',''),
@@ -343,7 +348,7 @@ body { margin-top: 0px; padding: 0px; }
             buffer += str(e)
 
         buffer += """
-		<br /><a href="/question">return</a>
+		<br /><a href="/question#inner_top">return</a>
 		</body></html>
 		"""
 
@@ -359,19 +364,22 @@ body { margin-top: 0px; padding: 0px; }
 		<h1>Local Decks</h1>
 		"""
         try:
-            deckList = [ f[:-5] for f in glob.glob(os.path.join(ANKIMINI_PATH,"*.anki")) ]
+            deckList = glob.glob(os.path.join(ANKIMINI_PATH,"*.anki"))
             if deckList is None or len(deckList)==0:
                 buffer += "<em>You have no local decks!</em>"
             else:
-                buffer += '<table width="100%%" cellspacing="10">'
-                for d in deckList:
-                   	buffer += '<tr><td><a href="/switch?d=%s&i=y">%s</a></td></tr>' % ( d, d )
+                buffer += '<table width="80%%" cellspacing="10"><col width="80%%" />'
+                for p in deckList:
+                    import stat
+                    bytes=os.stat(p)[stat.ST_SIZE]
+                    name=os.path.basename(p)[:-5]
+                    buffer += '<tr><td><a href="/switch?d=%s&i=y">%s</a></td><td>%s</td></tr>' % ( name, name, human_readable_size(bytes) )
                 buffer += "</table>"
         except Exception, e:
             buffer += "<em>Error listing files!</em><br />" + str(e)
 
         buffer += """
-		<br /><a href="/question">return</a>
+		<br /><a href="/question#inner_top">return</a>
 		</body>
 		</html>
 	        """
@@ -402,7 +410,7 @@ body { margin-top: 0px; padding: 0px; }
             buffer += "<em>Can't connect - check username/password</em>"
 
         buffer += """
-		<br /><a href="/question">return</a>
+		<br /><a href="/question#inner_top">return</a>
 		</body>
 		</html>
 	        """
@@ -444,8 +452,8 @@ body { margin-top: 0px; padding: 0px; }
             newdeck.lastLoaded = newdeck.modified
 
 	    newdeck = self.syncDeck( newdeck )
-
             newdeck.save()
+
             if deck:
                 deck.close()
                 deck = None
@@ -475,7 +483,7 @@ body { margin-top: 0px; padding: 0px; }
 
         buffer += """
 		<br />
-		<a href="/question">return</a>
+		<a href="/question#inner_top">return</a>
 		</body></html>
 		"""
 
@@ -510,7 +518,7 @@ body { margin-top: 0px; padding: 0px; }
                 <tr><td>Play command</td><td>%s</td></tr>
             </table>
             <p>For more info on Anki, visit the <a href="http://ichi2.net/anki">home page</a></p>
-	    <br /><a href="/question">return</a>
+	    <br /><a href="/question#inner_top">return</a>
             </body>
             </html>
         """ % ( VERSION_ANKIMINI,
@@ -591,7 +599,7 @@ body { margin-top: 0px; padding: 0px; }
             except Exception, e:
                 self.errorMsg = str(e)
             if query.get("i"):
-                self.path="/question"
+                self.path="/question#inner_top"
             else:
                 self.path="/"
 
@@ -602,7 +610,7 @@ body { margin-top: 0px; padding: 0px; }
             self.flushWrite(self._outer())
         elif deck and self.path.startswith("/save"):
             deck.save()
-            self.path = "/question"
+            self.path = "/question#inner_top"
         elif deck and self.path.startswith("/mark"):
             f = deck.s.query(Fact).get(currentCard.factId)
             if "marked" in f.tags.lower():
@@ -617,7 +625,7 @@ body { margin-top: 0px; padding: 0px; }
             deck.s.flush()
             deck.s.expunge(f)
             history.pop()
-            self.path = "/question"
+            self.path = "/question#inner_top"
         elif deck and self.path.startswith("/replay"):
             self.prepareMedia(currentCard.question)
             self.prepareMedia(currentCard.answer)
@@ -633,11 +641,11 @@ body { margin-top: 0px; padding: 0px; }
 			<meta name="viewport" content="user-scalable=yes, width=device-width, maximum-scale=0.6667" />
 			</head><body>""")
                 deck = self.syncDeck( deck )
-                self.flushWrite('<br><a href="/question">return</a>')
+                self.flushWrite('<br><a href="/question#inner_top">return</a>')
                 self.flushWrite("</body></html>")
             except Exception, e:
                 self.errorMsg = str(e)
-                self.path = "/question"
+                self.path = "/question#inner_top"
 
 
         if self.path.startswith("/question"):
@@ -675,7 +683,7 @@ body { margin-top: 0px; padding: 0px; }
 <br>
 <div class="q">%(question)s</div><br>
 <div class="a">%(answer)s</div>
-<br></div><br><form action="/question" method="get">
+<br></div><br><form action="/question#inner_top" method="get">
 <input type="hidden" name="mod" value="%(mod)d">
 <table width="100%%">
 <tr>
@@ -743,6 +751,19 @@ value="4">%(4)s</button></td>
         # hack to get safari to render immediately!
         self.flushWrite("<!--" + " "*1024 + "-->")
 
+	# this can take a long time ... ensure the client doesn't timeout before we finish
+	from threading import Event, Thread
+	ping_event = Event()
+        def ping_client( s = self.wfile, ev=ping_event ):
+            while 1:
+                ev.wait(3)
+                if ev.isSet():
+                    return
+                s.write(".<!--\n-->")
+                s.flush()
+	ping_thread = Thread(target=ping_client)
+	ping_thread.start()
+
         # summary
         self.lineWrite("Fetching summary from server..")
         sums = client.summaries()
@@ -759,21 +780,12 @@ value="4">%(4)s</button></td>
             self.lineWrite("<br>" + pr + "<br>")
             self.lineWrite("Sending payload...")
 
-	# this can take a long time ... ensure the client doesn't timeout before we finish
-	from threading import Event, Thread
-	ping_event = Event()
-        def ping_client( s = self.wfile, ev=ping_event ):
-            while 1:
-                ev.wait(3)
-                if ev.isSet():
-                    return
-                s.write(".<!--\n-->")
-                s.flush()
-	ping_thread = Thread(target=ping_client)
-	ping_thread.start()
-
         if needFull:
             deck = ds.Deck(deck.path, backup=False)
+            # why is deck.syncName getting lost on a full sync???
+            if deck.syncName is None:
+                deck.syncName = proxy.deckName
+                print "syncName was lost on full sync, restored to", deck.syncName
         else:
             res = client.server.applyPayload(payload)
             # apply reply
@@ -842,7 +854,10 @@ def run(server_class=HTTPServer,
 if __name__ == '__main__':
     config = Config()
     config.loadConfig()
-    deck = openDeck()
+    try:
+        deck = openDeck()
+    except:
+        deck = None
     currentCard = None
     history = []
     print "starting server on port %d" % config.get('SERVER_PORT',8000)
