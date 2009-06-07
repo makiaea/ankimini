@@ -29,6 +29,8 @@ AnkiMini:
 	-mv AnkiMini AnkiMini.old
 	cp -rp directory-template AnkiMini
 	cp -rp $(ANKIMINI_SOURCE_DIR)/main.py $(ANKIMINI_SOURCE_DIR)/timings.py AnkiMini/Applications/AnkiMini.app/
+	# clean .pyc files from libanki
+	find $(LIBANKI_SOURCE_DIR)/libanki -type f ! -path $(LIBANKI_SOURCE_DIR)/.git/\* -name '*.pyc' -exec rm {} \;
 	# avoid copying .git
 	cp -rp $(LIBANKI_SOURCE_DIR)/libanki/* AnkiMini/Applications/AnkiMini.app/libanki/
 
