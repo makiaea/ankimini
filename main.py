@@ -23,7 +23,7 @@ from anki.facts import Fact
 ####### VERSIONS #########
 
 from anki import version as VERSION_LIBANKI
-VERSION_ANKIMINI="1.1.8.rlc10"
+VERSION_ANKIMINI="1.1.8.rlc11"
 
 ##########################
 
@@ -206,11 +206,12 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                 f.close()
             except:
                 self.local_css = ""
-        if config.get('USE_LOCAL_CSS', False):
+        use_local_css = config.get('USE_LOCAL_CSS', False)
+        if use_local_css:
             css = self.local_css
         elif deck:
             css = deck.css
-        if currentCard:
+        if currentCard and deck and not use_local_css:
             background = deck.s.scalar(
                 "select lastFontColour from cardModels where id = :id",
                 id=currentCard.cardModelId)
@@ -709,13 +710,12 @@ body { margin-top: 0px; padding: 0px; }
                     currentCard and mod == str(int(currentCard.modified))):
                     deck.answerCard(currentCard, int(q))
                 # get new card
-                c = deck.getCard(orm=False)
-                if not c:
+                currentCard = deck.getCard(orm=False)
+                if not currentCard:
                     buffer += (self._top() +
                                deck.deckFinishedMsg() +
                                self._bottom)
                 else:
-                    currentCard = c
                     buffer += (self._top() + ("""
 <br><div class="q">%(question)s</div>
 <br></div><br>
@@ -723,7 +723,7 @@ body { margin-top: 0px; padding: 0px; }
 <input class="bigButton" type="submit" class="button" value="Answer">
 </form>
 """ % {
-        "question": self.prepareMedia(c.htmlQuestion(align=False)),
+        "question": self.prepareMedia(currentCard.htmlQuestion(align=False)),
         }))
                     buffer += (self._bottom)
         elif self.path.startswith("/answer"):
