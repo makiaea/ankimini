@@ -23,7 +23,7 @@ from anki.facts import Fact
 ####### VERSIONS #########
 
 from anki import version as VERSION_LIBANKI
-VERSION_ANKIMINI="1.1.8.rlc9"
+VERSION_ANKIMINI="1.1.8.rlc10"
 
 ##########################
 
@@ -48,6 +48,8 @@ class Config(dict):
         self['SYNC_USERNAME']="changeme"
         self['SYNC_PASSWORD']="changeme"
         self['PLAY_COMMAND']="play"
+        self['USE_LOCAL_CSS']=False
+        self['LOCAL_CSS_FILE']='basic.css'
 
     def loadConfig(self):
         try:
@@ -82,24 +84,26 @@ def human_readable_size( num ):
             return "%3.1f%s" % (num, x)
         num /= 1024.0
 
-def expandDeckName( raw, base_dir=ANKIMINI_PATH ):
+def expandName( raw, ext, base_dir=ANKIMINI_PATH ):
+    if raw is None: return None
+    if ext is None: ext=''
     if raw[0] == '/':
         canonical = raw
     else:
         canonical = os.path.join(base_dir, raw)
 
-    if canonical[-5:] != ".anki":
-        canonical += ".anki"
+    if canonical[-len(ext):] != ext:
+        canonical += ext
 
     return canonical
-# expandDeckName()
+# expandName()
 
 def openDeck(deckPath=None):
     global config
     try:
         if deckPath is None:
             deckPath = config['DECK_PATH']
-        deckPath = expandDeckName(deckPath)
+        deckPath = expandName(deckPath, '.anki')
         print "open deck.. " + deckPath
         if not os.path.exists(deckPath):
             raise ValueError("Couldn't find deck %s" % (deckPath,) )
@@ -114,7 +118,7 @@ def openDeck(deckPath=None):
 
 def switchDeck( olddeck, newdeck_name ):
     global config
-    newdeck_path = expandDeckName(newdeck_name)
+    newdeck_path = expandName(newdeck_name, '.anki')
     if olddeck:
         olddeck.save()
         if newdeck_path == olddeck.path:
@@ -131,6 +135,9 @@ def switchDeck( olddeck, newdeck_name ):
 ##################
 
 class Handler(SimpleHTTPRequestHandler):
+
+    local_css=None
+
     def setup(self):
        SimpleHTTPRequestHandler.setup(self)
        if config.get('DEBUG_NETWORK') == True:
@@ -172,6 +179,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 </body></html>"""
 
     def _top(self):
+        global config
         if deck and deck.modifiedSinceSave():
             saveClass="medButtonRed"
         else:
@@ -188,6 +196,20 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             stats = self.getStats()
         else:
             stats = ("","")
+
+        css =""
+        if self.local_css is None:
+            cssFile = expandName( config.get('LOCAL_CSS_FILE'), '.css' )
+            try:
+                f = open(cssFile,"r")
+                self.local_css = f.read()
+                f.close()
+            except:
+                self.local_css = ""
+        if config.get('USE_LOCAL_CSS', False):
+            css = self.local_css
+        elif deck:
+            css = deck.css
         if currentCard:
             background = deck.s.scalar(
                 "select lastFontColour from cardModels where id = :id",
@@ -240,7 +262,7 @@ body { margin-top: 0px; padding: 0px; }
 </tr></table>
 %s
 <div style='background: %s'>
-""" % (deck.css if deck is not None else "", stats[0], stats[1], saveClass,
+""" % (css, stats[0], stats[1], saveClass,
        markClass, self.errorMsg, background)
 
     _bottom = """
@@ -282,6 +304,16 @@ body { margin-top: 0px; padding: 0px; }
         buffer = """
 		<html>
 		<head><title>Config</title></head>
+		<script type="text/javascript" language="javascript">
+		<!--
+		function setCssToggle() {
+                        c = document.getElementById('localcss');
+                        var fileInput = document.getElementById('cssfile');
+			fileInput.disabled = !c.checked
+		}
+                window.onload=setCssToggle;
+		//-->
+		</script>
 		<body>
 		<h1>Config</h1>
 		 <form action="/config" method="POST">
@@ -292,6 +324,10 @@ body { margin-top: 0px; padding: 0px; }
 		  <fieldset><legend>Deck</legend>
 		   <label for="deckpath">Deck</label>  <input id="deckpath" type="text" name="deckpath" value="%s" autocorrect="off" autocapitalize="off" />
                    <em>(change doesn't take effect until a server restart)</em>
+		  </fieldset>
+		  <fieldset><legend>Display</legend>
+		   <label for="localcss">Override deck CSS?</label>  <input id="localcss" type="checkbox" name="localcss" value="localcss" %s onclick="setCssToggle()" /><br />
+		   <label for="cssfile">CSS Filename</label>  <input id="cssfile" type="text" name="cssfile" value="%s" />
 		  </fieldset>
 		  <fieldset><legend>Misc details</legend>
 		   <label for="play">Play command</label>  <input id="play" type="text" name="play" value="%s" autocorrect="off" autocapitalize="off" /> <br />
@@ -306,6 +342,7 @@ body { margin-top: 0px; padding: 0px; }
 		</body>
 		</html>
         """ % ( config.get('SYNC_USERNAME',''), config.get('SYNC_PASSWORD',''), config.get('DECK_PATH',''),
+                 'checked="checked"' if config.get('USE_LOCAL_CSS') else '', config.get('LOCAL_CSS_FILE',''),
                  config.get('PLAY_COMMAND',''), config.get('SERVER_PORT','') )
 
         return buffer
@@ -322,7 +359,16 @@ body { margin-top: 0px; padding: 0px; }
             port = int(params['port'][0])
             play = unicode(params['play'][0], 'utf-8')
 
+            localcss = params.has_key('localcss')
+            if localcss:
+                cssfile  = unicode(params['cssfile' ][0], 'utf-8')
+                # force re-read of local css file next time around
+                self.local_css=None
+            else:
+                cssfile = config.get('LOCAL_CSS_FILE','')
+
             config.update( { 'SYNC_USERNAME': username, 'SYNC_PASSWORD': password,
+                              'USE_LOCAL_CSS': localcss, 'LOCAL_CSS_FILE': cssfile,
                               'SERVER_PORT': port, 'PLAY_COMMAND': play } )
             config.saveConfig()
             try:
@@ -339,10 +385,12 @@ body { margin-top: 0px; padding: 0px; }
 		<em>Config saved</em> <br />
 		username = %s <br />
 		password = %s <br />
+                override deck CSS = %s <br />
+                local CSS file = %s <br />
                 port = %d <br />
                 play = %s <br />
                 %s
-		""" % ( username, obscured, port, play, errorMsg )
+		""" % ( username, obscured, localcss, cssfile, port, play, errorMsg )
         except Exception, e:
             buffer += "<em>Config save may have failed!  Please check the values and try again</em><br />"
             buffer += str(e)
@@ -437,12 +485,12 @@ body { margin-top: 0px; padding: 0px; }
         try:
             if deck:
                 deck.save()
-            local_deck = expandDeckName(name)
+            local_deck = expandName(name, '.anki')
             if os.path.exists(local_deck):
                 raise Exception("Local deck %s already exists.  You can't overwrite, sorry!" % (name,))
 
             tmp_dir = unicode(tempfile.mkdtemp(dir=ANKIMINI_PATH, prefix="anki"), sys.getfilesystemencoding())
-            tmp_deck = expandDeckName(name, tmp_dir)
+            tmp_deck = expandName(name, '.anki', tmp_dir)
 
             newdeck = ds.Deck(tmp_deck)
             newdeck.s.execute("pragma cache_size = 1000")
@@ -514,6 +562,8 @@ body { margin-top: 0px; padding: 0px; }
                 <tr><td>Deck path</td><td>%s</td></tr>
                 <tr><td>Sync user</td><td>%s</td></tr>
                 <tr><td>Sync pass</td><td>%s</td></tr>
+                <tr><td>Override deck CSS</td><td>%s</td></tr>
+                <tr><td>Local CSS file</td><td>%s</td></tr>
                 <tr><td>Server port</td><td>%s</td></tr>
                 <tr><td>Play command</td><td>%s</td></tr>
             </table>
@@ -524,8 +574,9 @@ body { margin-top: 0px; padding: 0px; }
         """ % ( VERSION_ANKIMINI,
 		deck.path if deck is not None else 'None',
 		VERSION_ANKIMINI, VERSION_LIBANKI,
-		config.configFile, config.get('DECK_PATH'), config.get('SYNC_USERNAME'),
-                     obscured, config.get('SERVER_PORT'), config.get('PLAY_COMMAND'),
+		config.configFile, config.get('DECK_PATH'), config.get('SYNC_USERNAME'), obscured,
+		config.get('USE_LOCAL_CSS'), config.get('LOCAL_CSS_FILE'),
+		config.get('SERVER_PORT'), config.get('PLAY_COMMAND'),
               )
 
         return buffer
