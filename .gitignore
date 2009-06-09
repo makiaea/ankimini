@@ -1,2 +1,5 @@
 libanki
 *.pyc
+*.deb
+iphone-build/AnkiMini
+iphone-build/Packages*
