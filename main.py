@@ -18,12 +18,10 @@ from anki.media import mediaRefs
 from anki.utils import parseTags, joinTags
 from anki.facts import Fact
 
-
-
 ####### VERSIONS #########
 
 from anki import version as VERSION_LIBANKI
-VERSION_ANKIMINI="1.1.8.rlc11"
+VERSION_ANKIMINI="2.0"
 
 ##########################
 
