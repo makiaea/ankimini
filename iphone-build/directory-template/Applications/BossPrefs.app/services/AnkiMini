@@ -1,4 +1,0 @@
-launchctl start net.ichi2.ankimini
-launchctl stop net.ichi2.ankimini
-AnkiMini.app/main.py
-/Applications/AnkiMini.app/ankimini-boss.png
