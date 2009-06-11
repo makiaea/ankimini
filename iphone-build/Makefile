@@ -17,9 +17,9 @@ CTL_Recommends=com.bigboss.bossprefs
 CTL_Architecture=iphoneos-arm
 CTL_Description=Anki server on iPhone.  Access with Safari (http://localhost:8000).
 CTL_Icon=file:///Applications/AnkiMini.app/Icon.png
-CTL_Author=Damien Elmes <resolve@ichi2.net>
+CTL_Author=Richard Colley <richard.colley+ankimini@gmail.com>
 CTL_Homepage=http://ichi2.net/anki
-CTL_Maintainer=Richard Colley <richard.colley+ankimini@gmail.com>
+CTL_Maintainer=Damien Elmes <resolve@ichi2.net>
 
 
 all: AnkiMini AnkiMini-$(DEB_VERSION).deb Packages.bz2

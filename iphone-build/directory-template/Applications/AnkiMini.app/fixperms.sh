@@ -30,7 +30,7 @@ set_perms -R mobile:mobile 644 $NEW_ANKI_DIR
 
 # set perms on ankimini application directory
 set_perms -R mobile:mobile 644 $APP_DIR
-chmod 755 $APP_DIR/ankimini $APP_DIR/AnkiMini $APP_DIR/fixperms.sh
+chmod 755 $APP_DIR/ankimini $APP_DIR/Anki $APP_DIR/fixperms.sh
 
 # set perms on boss prefs and launchctl files
 set_perms root:wheel 644 /Applications/BossPrefs.app/services/AnkiMini
