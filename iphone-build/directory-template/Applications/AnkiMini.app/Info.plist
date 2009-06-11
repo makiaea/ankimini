@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>AnkiMini</string>
+	<string>Anki</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.ichi2.ankimini</string>
 	<key>CFBundleInfoDictionaryVersion</key>
