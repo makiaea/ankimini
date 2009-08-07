@@ -3,7 +3,7 @@
 ANKIMINI_SOURCE_DIR=..
 LIBANKI_SOURCE_DIR=../..
 
-DEB_VERSION=0.29
+DEB_VERSION=0.30
 UPSTREAM_VERSION=$(shell grep VERSION_ANKIMINI= $(ANKIMINI_SOURCE_DIR)/main.py  | cut -d'"' -f2)
 
 # debian control file package details
