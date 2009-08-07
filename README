@@ -12,6 +12,35 @@ Changes:
 --------
 
 ---------------
+AnkiMini 2.0.2:
+---------------
+
+- ETA displayed in compact format
+- Changes from Ken Chatfield:
+
+1. have added an option in the settings to toggle the display of the
+intervals on the buttons - when off, the buttons show 'Hard', 'Good'
+and 'Easy' instead of an interval
+2. have added some css styles to the answer buttons such that they are
+not so 'round' (actually uses some css3 attributes supported by safari
+to simulate the iphone button style while customising the curve radius
+at the edges so it is less extreme)
+3. have made the default bodytext arial/helvitica (although this can
+still be changed using a custom stylesheet, I think)
+4. have added an option to display a divider between q/a as in the
+full version of anki
+5. have specified a minimum height of the q/a 'area' so that if both
+are short enough to fit on a single screen the interface buttons will
+always be displayed at the bottom - thus remaining in exactly the same
+position on both the 'question' and 'answer' side of the card so the
+user doesn't have to go 'searching' for the ranking buttons
+6. have modified the spacing of the buttons and styles so there is
+less 'jumping around' from q and a side of the card in general
+7. have updated the display style used on the auxiliary pages (config,
+about, deck selection etc.) so that they look a little more like a
+native app, with an iphone-style header for each page
+
+---------------
 AnkiMini 2.0.1:
 ---------------
 
