@@ -12,6 +12,13 @@ Changes:
 --------
 
 ---------------
+AnkiMini 2.0.1:
+---------------
+
+- rebuilt with new libanki that bumps sync protocol
+- includes leech detection
+
+---------------
 AnkiMini 2.0.0:
 ---------------
 

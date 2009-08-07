@@ -17,6 +17,7 @@ from anki.sync import SyncClient, HttpSyncServerProxy
 from anki.media import mediaRefs
 from anki.utils import parseTags, joinTags
 from anki.facts import Fact
+from anki.hooks import addHook
 
 ####### VERSIONS #########
 
@@ -135,6 +136,9 @@ def switchDeck( olddeck, newdeck_name ):
 class Handler(SimpleHTTPRequestHandler):
 
     local_css=None
+
+    def __init__(self, *args, **kwargs):
+        SimpleHTTPRequestHandler.__init__(self, *args, **kwargs)
 
     def setup(self):
        SimpleHTTPRequestHandler.setup(self)
