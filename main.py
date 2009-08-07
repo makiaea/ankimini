@@ -49,6 +49,8 @@ class Config(dict):
         self['PLAY_COMMAND']="play"
         self['USE_LOCAL_CSS']=False
         self['LOCAL_CSS_FILE']='basic.css'
+        self['DISPLAY_INTERVAL']=True
+        self['DISPLAY_DIVIDER']=True
 
     def loadConfig(self):
         try:
@@ -175,7 +177,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 //-->
 </script>
 </head>
-<body>
+<body style="margin-left: 0; margin-top: 0; margin-right: 0">
 <iframe src="/question" width=470 frameborder=0 height=700>
 </iframe>
 </body></html>"""
@@ -224,11 +226,11 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 <head>
 <style>
 .bigButton
-{ font-size: 18px; width: 450px; height: 150px; padding: 5px;}
+{ font-size: 24px; width: 445px; height: 130px; padding: 5px; border: 2px solid #7F7F7F; background-color: #E2E2E2; -webkit-border-radius: 40px; background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#cccccc)); }
 .easeButton
-{ font-size: 18px; width: 105px; height: 130px; padding: 5px;}
+{ font-size: 18px; width: 105px; height: 130px; padding: 5px; border: 2px solid #7F7F7F; background-color: #E2E2E2; -webkit-border-radius: 40px; background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#cccccc)); }
 .easeButtonB
-{ font-size: 18px; width: 170px; height: 180px; padding: 5px;}
+{ font-size: 18px; width: 170px; height: 180px; padding: 5px; border: 2px solid #7F7F7F; background-color: #E2E2E2; -webkit-border-radius: 40px; background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#cccccc)); }
 .medButton
 { font-size: 18px; width: 100px; height: 40px; padding: 5px;}
 .medButtonRed
@@ -237,7 +239,9 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 { font-size: 30px; }
 .a
 { font-size: 30px; }
-body { margin-top: 0px; padding: 0px; }
+.qa-area
+{ min-height: 240px; }
+	body { margin-top: 0px; margin-left: 15px; padding: 0px; font-family: arial, helvetica; }
 %s
 </style>
 </head>
@@ -269,8 +273,6 @@ body { margin-top: 0px; padding: 0px; }
        markClass, self.errorMsg, background)
 
     _bottom = """
-<br />
-<br />
 <br />
 <table width="100%%"><tr valign=middle>
 <td align=left>
@@ -317,8 +319,13 @@ body { margin-top: 0px; padding: 0px; }
                 window.onload=setCssToggle;
 		//-->
 		</script>
-		<body>
-		<h1>Config</h1>
+		<style>
+		.page-header { background-color: #8FA1B9; border-bottom-style: solid; border-bottom-width: 1.5px; border-bottom-color: #2D3642; border-top-style: solid; border-top-width: 1.5px; border-top-color: #CDD5DF; color: #FFFFFF;
+			font-family: Arial, Helvetica, sans-serif; height: 51px; font-size: 30px; font-weight: bold; text-align: center; padding-top: 15px; text-shadow: 0 -1.5px 1.2px #5D6773, 0 1.5px 1.2px #A4B2C4; background: -webkit-gradient(linear, left top, left bottom, from(#B0BCCD), to(#6D84A2), color-stop(0.5, #889BB3), color-stop(0.5, #8195AF)); }
+		</style>
+		<body style="font-family: arial, helvetica; margin-left: 0px; margin-right: -10px; margin-top: 0px">
+		<div class="page-header">Config</div>
+		<div style="margin-left: 15; margin-right: 15; margin-top: 15">
 		 <form action="/config" method="POST">
 		  <fieldset><legend>Sync details</legend>
 		   <label for="username">User name</label> <input id="username" type="text" name="username" value="%s" autocorrect="off" autocapitalize="off" /> <br />
@@ -330,23 +337,28 @@ body { margin-top: 0px; padding: 0px; }
 		  </fieldset>
 		  <fieldset><legend>Display</legend>
 		   <label for="localcss">Override deck CSS?</label>  <input id="localcss" type="checkbox" name="localcss" value="localcss" %s onclick="setCssToggle()" /><br />
-		   <label for="cssfile">CSS Filename</label>  <input id="cssfile" type="text" name="cssfile" value="%s" />
+		   <label for="cssfile">CSS Filename</label>  <input id="cssfile" type="text" name="cssfile" value="%s" /><br />
+		   <label for="dispint">Display Interval</label>  <input id="dispint" type="checkbox" name="dispint" value="dispint" %s /><br />
+		   <label for="dispdiv">Display Divider</label>  <input id="dispdiv" type="checkbox" name="dispdiv" value="dispdiv" %s />
 		  </fieldset>
 		  <fieldset><legend>Misc details</legend>
 		   <label for="play">Play command</label>  <input id="play" type="text" name="play" value="%s" autocorrect="off" autocapitalize="off" /> <br />
 		   <label for="port">Server port</label>  <input id="port" type="text" name="port" value="%s" autocorrect="off" autocapitalize="off" />
-                   <em>(port change doesn't take effect until a server restart)</em>
+                   <em>(port change doesn't take effect until a server restart)</em><br />
 		  </fieldset>
 		  <fieldset class="submit">
 		   <input type="submit" class="button" value="Save Config">
 		  </fieldset>
 		 </form>
 		 <br /><a href="/question#inner_top">return</a>
+		</div>
 		</body>
 		</html>
         """ % ( config.get('SYNC_USERNAME',''), config.get('SYNC_PASSWORD',''), config.get('DECK_PATH',''),
                  'checked="checked"' if config.get('USE_LOCAL_CSS') else '', config.get('LOCAL_CSS_FILE',''),
-                 config.get('PLAY_COMMAND',''), config.get('SERVER_PORT','') )
+                 'checked="checked"' if config.get('DISPLAY_INTERVAL') else '',
+                 'checked="checked"' if config.get('DISPLAY_DIVIDER') else '',
+                 config.get('PLAY_COMMAND',''), config.get('SERVER_PORT',''))
 
         return buffer
 ####################### end render_get_config
@@ -362,6 +374,8 @@ body { margin-top: 0px; padding: 0px; }
             port = int(params['port'][0])
             play = unicode(params['play'][0], 'utf-8')
 
+            dispint = params.has_key('dispint')
+            dispdiv = params.has_key('dispdiv')
             localcss = params.has_key('localcss')
             if localcss:
                 cssfile  = unicode(params['cssfile' ][0], 'utf-8')
@@ -372,7 +386,8 @@ body { margin-top: 0px; padding: 0px; }
 
             config.update( { 'SYNC_USERNAME': username, 'SYNC_PASSWORD': password,
                               'USE_LOCAL_CSS': localcss, 'LOCAL_CSS_FILE': cssfile,
-                              'SERVER_PORT': port, 'PLAY_COMMAND': play } )
+                              'SERVER_PORT': port, 'PLAY_COMMAND': play,
+                              'DISPLAY_INTERVAL': dispint, 'DISPLAY_DIVIDER': dispdiv} )
             config.saveConfig()
             try:
                 global deck
@@ -386,14 +401,16 @@ body { margin-top: 0px; padding: 0px; }
             obscured = '*' * len(password)
             buffer += """
 		<em>Config saved</em> <br />
-		username = %s <br />
-		password = %s <br />
-                override deck CSS = %s <br />
-                local CSS file = %s <br />
-                port = %d <br />
-                play = %s <br />
+		Username = %s <br />
+		Password = %s <br />
+                Override deck CSS = %s <br />
+                Local CSS file = %s <br />
+                Display interval = %s <br />
+                Display divider = %s <br />
+                Port = %d <br />
+                Play = %s <br />
                 %s
-		""" % ( username, obscured, localcss, cssfile, port, play, errorMsg )
+		""" % ( username, obscured, localcss, cssfile, dispint, dispdiv, port, play, errorMsg )
         except Exception, e:
             buffer += "<em>Config save may have failed!  Please check the values and try again</em><br />"
             buffer += str(e)
@@ -410,9 +427,15 @@ body { margin-top: 0px; padding: 0px; }
         import glob
         buffer = """
 		<html>
-		<head><title>List local decks</title></head>
-		<body>
-		<h1>Local Decks</h1>
+		<head><title>List local decks</title>
+		<style>
+		.page-header { background-color: #8FA1B9; border-bottom-style: solid; border-bottom-width: 1.5px; border-bottom-color: #2D3642; border-top-style: solid; border-top-width: 1.5px; border-top-color: #CDD5DF; color: #FFFFFF;
+			font-family: Arial, Helvetica, sans-serif; height: 51px; font-size: 30px; font-weight: bold; text-align: center; padding-top: 15px; text-shadow: 0 -1.5px 1.2px #5D6773, 0 1.5px 1.2px #A4B2C4; background: -webkit-gradient(linear, left top, left bottom, from(#B0BCCD), to(#6D84A2), color-stop(0.5, #889BB3), color-stop(0.5, #8195AF)); }
+		</style>
+		</head>
+		<body style="font-family: arial, helvetica; margin-left: 0px; margin-right: -10px; margin-top: 0px">
+		<div class="page-header">Local Decks</div>
+		<div style="margin-left: 15; margin-right: 15; margin-top: 15">
 		"""
         try:
             deckList = glob.glob(os.path.join(ANKIMINI_PATH,"*.anki"))
@@ -431,6 +454,7 @@ body { margin-top: 0px; padding: 0px; }
 
         buffer += """
 		<br /><a href="/question#inner_top">return</a>
+		</div>
 		</body>
 		</html>
 	        """
@@ -442,9 +466,15 @@ body { margin-top: 0px; padding: 0px; }
         global config
         buffer = """
 		<html>
-		<head><title>List personal decks</title></head>
-		<body>
-		<h1>Online Personal Decks</h1>
+		<head><title>List personal decks</title>
+		<style>
+		.page-header { background-color: #8FA1B9; border-bottom-style: solid; border-bottom-width: 1.5px; border-bottom-color: #2D3642; border-top-style: solid; border-top-width: 1.5px; border-top-color: #CDD5DF; color: #FFFFFF;
+			font-family: Arial, Helvetica, sans-serif; height: 51px; font-size: 30px; font-weight: bold; text-align: center; padding-top: 15px; text-shadow: 0 -1.5px 1.2px #5D6773, 0 1.5px 1.2px #A4B2C4; background: -webkit-gradient(linear, left top, left bottom, from(#B0BCCD), to(#6D84A2), color-stop(0.5, #889BB3), color-stop(0.5, #8195AF)); }
+		</style>
+		</head>
+		<body style="font-family: arial, helvetica; margin-left: 0px; margin-right: -10px; margin-top: 0px">
+		<div class="page-header">Online Personal Decks</div>
+		<div style="margin-left: 15; margin-right: 15; margin-top: 15">
 		Please select one to download it...
 		"""
         try:
@@ -462,6 +492,7 @@ body { margin-top: 0px; padding: 0px; }
 
         buffer += """
 		<br /><a href="/question#inner_top">return</a>
+		</div>
 		</body>
 		</html>
 	        """
@@ -480,7 +511,7 @@ body { margin-top: 0px; padding: 0px; }
         self.wfile.write( """
 		<html>
 		<head><title>Downloading %s ...</title></head>
-		<body>
+		<body style="font-family: arial, helvetica;">
 		""" % ( name ) )
         buffer=""
 
@@ -548,8 +579,15 @@ body { margin-top: 0px; padding: 0px; }
         obscured='*' * len(config.get('SYNC_PASSWORD',''))
         buffer = """
             <html>
-            <head><title>About</title></head>
-            <body>
+            <head><title>About</title>
+			<style>
+			.page-header { background-color: #8FA1B9; border-bottom-style: solid; border-bottom-width: 1.5px; border-bottom-color: #2D3642; border-top-style: solid; border-top-width: 1.5px; border-top-color: #CDD5DF; color: #FFFFFF;
+				font-family: Arial, Helvetica, sans-serif; height: 51px; font-size: 30px; font-weight: bold; text-align: center; padding-top: 15px; text-shadow: 0 -1.5px 1.2px #5D6773, 0 1.5px 1.2px #A4B2C4; background: -webkit-gradient(linear, left top, left bottom, from(#B0BCCD), to(#6D84A2), color-stop(0.5, #889BB3), color-stop(0.5, #8195AF)); }
+			</style>
+			</head>
+            <body style="font-family: arial, helvetica; margin-left: 0px; margin-right: -10px; margin-top: 0px">
+            <div class="page-header">About</div>
+            <div style="margin-left: 15; margin-right: 15; margin-top: 15">
             <h1>AnkiMini v%s</h1>
             <h2>Currently Loaded Deck</h2>
             %s
@@ -567,11 +605,14 @@ body { margin-top: 0px; padding: 0px; }
                 <tr><td>Sync pass</td><td>%s</td></tr>
                 <tr><td>Override deck CSS</td><td>%s</td></tr>
                 <tr><td>Local CSS file</td><td>%s</td></tr>
+                <tr><td>Display interval</td><td>%s</td></tr>
+                <tr><td>Display divider</td><td>%s</td></tr>
                 <tr><td>Server port</td><td>%s</td></tr>
                 <tr><td>Play command</td><td>%s</td></tr>
             </table>
             <p>For more info on Anki, visit the <a href="http://ichi2.net/anki">home page</a></p>
 	    <br /><a href="/question#inner_top">return</a>
+            </div>
             </body>
             </html>
         """ % ( VERSION_ANKIMINI,
@@ -579,7 +620,7 @@ body { margin-top: 0px; padding: 0px; }
 		VERSION_ANKIMINI, VERSION_LIBANKI,
 		config.configFile, config.get('DECK_PATH'), config.get('SYNC_USERNAME'), obscured,
 		config.get('USE_LOCAL_CSS'), config.get('LOCAL_CSS_FILE'),
-		config.get('SERVER_PORT'), config.get('PLAY_COMMAND'),
+		config.get('DISPLAY_INTERVAL'), config.get('DISPLAY_DIVIDER'), config.get('SERVER_PORT'), config.get('PLAY_COMMAND'),
               )
 
         return buffer
@@ -693,7 +734,7 @@ body { margin-top: 0px; padding: 0px; }
                 self.flushWrite("""
 			<html><head>
 			<meta name="viewport" content="user-scalable=yes, width=device-width, maximum-scale=0.6667" />
-			</head><body>""")
+			</head><body style="font-family: arial, helvetica;">""")
                 deck = self.syncDeck( deck )
                 self.flushWrite('<br><a href="/question#inner_top">return</a>')
                 self.flushWrite("</body></html>")
@@ -719,12 +760,19 @@ body { margin-top: 0px; padding: 0px; }
                                self._bottom)
                 else:
                     buffer += (self._top() + ("""
-<br><div class="q">%(question)s</div>
-<br></div><br>
-<form action="/answer" method="get">
-<input class="bigButton" type="submit" class="button" value="Answer">
+<br>
+<div class="qa-area">
+<div class="q" %(divider)s>%(question)s<br /></div>
+</div>
+<br></div><br><form action="/answer" method="get" style="margin: 0px; padding: 0px;">
+<table width="100%%">
+<tr>
+<td align=center><button class="bigButton" type="submit" class="button" value="Answer">Answer</button></td>
+</tr>
+</table>
 </form>
 """ % {
+        "divider": 'style="border-bottom-style: solid; border-bottom-width: 1px; border-bottom-color: #7F7F7F;"' if config.get('DISPLAY_DIVIDER', False) else '',
         "question": self.prepareMedia(currentCard.htmlQuestion(align=False)),
         }))
                     buffer += (self._bottom)
@@ -734,30 +782,47 @@ body { margin-top: 0px; padding: 0px; }
             c = currentCard
             buffer += (self._top() + """
 <br>
-<div class="q">%(question)s</div><br>
-<div class="a">%(answer)s</div>
-<br></div><br><form action="/question#inner_top" method="get">
+<div class="qa-area">
+<div class="q" %(divider)s>%(question)s<br /></div>
+<div class="a">%(divider_two)s%(answer)s</div>
+</div>
+<br></div><br><form action="/question#inner_top" method="get" style="margin: 0px; padding: 0px;">
 <input type="hidden" name="mod" value="%(mod)d">
 <table width="100%%">
 <tr>
 """ % {
+    "divider": 'style="border-bottom-style: solid; border-bottom-width: 1px; border-bottom-color: #7F7F7F;"' if config.get('DISPLAY_DIVIDER', False) else '',
+    "divider_two": '<br />' if config.get('DISPLAY_DIVIDER', False) else '',
     "question": self.prepareMedia(c.htmlQuestion(align=False), auto=False),
     "answer": self.prepareMedia(c.htmlAnswer(align=False)),
     "mod": c.modified,
     })
-            ints = {}
-            for i in range(1, 5):
-                ints[str(i)] = deck.nextIntervalStr(c, i, True)
-            buffer += ("""
-<td><button class="easeButton" type="submit" class="button" name="q"
-value="1">Soon</button></td>
-<td><button class="easeButton" type="submit" class="button" name="q"
-value="2">%(2)s</button><br></td>
-<td><button class="easeButton" type="submit" class="button" name="q"
-value="3">%(3)s</button></td>
-<td><button class="easeButton" type="submit" class="button" name="q"
-value="4">%(4)s</button></td>
-""" % ints)
+            display_interval = config.get('DISPLAY_INTERVAL', False)
+            if display_interval:
+                ints = {}
+                for i in range(1, 5):
+                    ints[str(i)] = deck.nextIntervalStr(c, i, True)
+                buffer += ("""
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="1">Soon</button></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="2">%(2)s</button><br></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="3">%(3)s</button></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="4">%(4)s</button></td>
+    """ % ints)
+            else:
+                buffer += ("""
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="1">Again</button></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="2">Hard</button><br></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="3">Good</button></td>
+    <td align=center><button class="easeButton" type="submit" class="button" name="q"
+    value="4">Easy</button></td>
+    """)
             buffer += ("</tr></table></form>")
             buffer += (self._bottom)
 
@@ -797,7 +862,7 @@ value="4">%(4)s</button></td>
             raise Exception("Nothing to do")
 
 	self.flushWrite("""<h1>Syncing deck</h1>
-        <h2%s</h2>
+        <h2>%s</h2>
 	<em>This could take a while with a big deck ... please be patient!</em>
 	""" % (deck.path,) )
 
@@ -858,7 +923,7 @@ value="4">%(4)s</button></td>
         return deck
 
     def getStats(self):
-        s = deck.getStats()
+        s = deck.getStats(short=True)
         stats = (("T: %(dYesTotal)d/%(dTotal)d "
                  "(%(dYesTotal%)3.1f%%) "
                  "A: <b>%(gMatureYes%)3.1f%%</b>. ETA: <b>%(timeLeft)s</b>") % s)
