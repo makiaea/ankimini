@@ -715,6 +715,8 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             else:
                 f.tags = joinTags(parseTags(
                     f.tags) + ["Marked"])
+            f.setModified(textChanged=True)
+            deck.updateFactTags([f.id])
             f.setModified()
             deck.flushMod()
             deck.s.flush()
