@@ -626,6 +626,58 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         return buffer
 ####################### end render_get_about
 
+    def render_get_check(self, quick):
+        global deck
+        global config
+
+	quick = self.path.startswith("/check_quick")
+        self.wfile.write("""
+        <html><head><title>Checking deck</title></head> 
+        Performing a deck database check...
+        """)
+
+        if not deck:
+            return "Error: no deck is open, nothing to check!</body></html>"
+
+        # hack to get safari to render immediately!
+        self.flushWrite("<!--" + " "*1024 + "-->")
+
+	# this can take a long time ... ensure the client doesn't timeout before we finish
+	from threading import Event, Thread
+	ping_event = Event()
+        def ping_client( s = self.wfile, ev=ping_event ):
+            while 1:
+                ev.wait(3)
+                if ev.isSet():
+                    return
+                s.write(".<!--\n-->")
+                s.flush()
+	ping_thread = Thread(target=ping_client)
+	ping_thread.start()
+
+        if quick:
+            self.flushWrite("<br/>Doing quick check ...")
+        else:
+            self.flushWrite("<br/>Doing FULL check, please be patient...")
+        ret = deck.fixIntegrity(quick)
+        buffer = "<br/>Result: <br/>" 
+
+        if ret == "ok":
+            buffer += ret
+        else:
+            buffer += ("Problems found:<br>%s" % ret)
+
+        buffer += """<br /><a href="/question#inner_top">return</a> </body> </html>"""
+        
+        # turn off client ping
+        ping_event.set()
+        ping_thread.join(5)
+
+        return buffer
+
+####################### end render_get_check
+
+
     def do_POST(self):
         history.append(self.path)
         serviceStart = time.time()
@@ -750,18 +802,19 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                 self.errorMsg = "No deck opened! Check config is correct."
                 buffer += (self._top() + self._bottom)
             else:
-                # possibly answer old card
-                if (q is not None and
-                    currentCard and mod == str(int(currentCard.modified))):
-                    deck.answerCard(currentCard, int(q))
-                # get new card
-                currentCard = deck.getCard(orm=False)
-                if not currentCard:
-                    buffer += (self._top() +
-                               deck.deckFinishedMsg() +
-                               self._bottom)
-                else:
-                    buffer += (self._top() + ("""
+                try: # most deck errors manifest in answering cards
+                    # possibly answer old card
+                    if (q is not None and
+                        currentCard and mod == str(int(currentCard.modified))):
+                        deck.answerCard(currentCard, int(q))
+                    # get new card
+                    currentCard = deck.getCard(orm=False)
+                    if not currentCard:
+                        buffer += (self._top() +
+                                   deck.deckFinishedMsg() +
+                                   self._bottom)
+                    else:
+                        buffer += (self._top() + ("""
 <br>
 <div class="qa-area">
 <div class="q" %(divider)s>%(question)s<br /></div>
@@ -777,6 +830,18 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         "divider": 'style="border-bottom-style: solid; border-bottom-width: 1px; border-bottom-color: #7F7F7F;"' if config.get('DISPLAY_DIVIDER', False) else '',
         "question": self.prepareMedia(currentCard.htmlQuestion(align=False)),
         }))
+                        buffer += (self._bottom)
+                except Exception, e:
+                    self.errorMsg = "An Exception was thrown processing the card."
+                    buffer += (self._top() + ("""
+<br/> <br/>
+There may be a bug in ankimini or an error in this deck.  You can try either a
+<b><a href="/check_quick">quick database check</a></b> or a 
+<b><a href="/check">full database check</a></b> to try and fix it.
+<br/> <br/>
+Or, just try to <a href="/question#inner_top">reload</a> the page and see if
+the problem magically goes away.
+"""))
                     buffer += (self._bottom)
         elif self.path.startswith("/answer"):
             if not currentCard:
@@ -838,6 +903,8 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 	    buffer = self.render_get_download(query)
 	elif self.path.startswith("/about"):
 	    buffer = self.render_get_about()
+        elif self.path.startswith("/check"):
+            buffer = self.render_get_check(deck)
 		
         self.wfile.write(buffer.encode("utf-8") + "\n")
         print "service time", time.time() - serviceStart
