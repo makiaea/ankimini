@@ -12,6 +12,14 @@ Changes:
 --------
 
 ---------------
+AnkiMini 2.0.3:
+---------------
+
+- embedded images will work
+- multiple sounds on one page will work
+- don't wait until sounds have finished playing to return page
+
+---------------
 AnkiMini 2.0.2:
 ---------------
 
