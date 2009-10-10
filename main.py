@@ -9,7 +9,7 @@ A mini anki webserver
 """
 __docformat__ = 'restructuredtext'
 
-import time, cgi, sys, os, re, subprocess
+import time, cgi, sys, os, re, subprocess, threading, traceback
 from BaseHTTPServer import HTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 from anki import DeckStorage as ds
@@ -778,6 +778,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         elif deck and self.path.startswith("/replay"):
             self.prepareMedia(currentCard.question)
             self.prepareMedia(currentCard.answer)
+            self.disableMedia()
             history.pop()
             self.path = "/question"
         elif deck and self.path.startswith("/sync"):
@@ -841,7 +842,8 @@ There may be a bug in ankimini or an error in this deck.  You can try either a
 <br/> <br/>
 Or, just try to <a href="/question#inner_top">reload</a> the page and see if
 the problem magically goes away.
-"""))
+<p>The exception was:<pre>%s</pre>
+""" % traceback.format_exc()))
                     buffer += (self._bottom)
         elif self.path.startswith("/answer"):
             if not currentCard:
@@ -1010,21 +1012,37 @@ the problem magically goes away.
         stats2 = ("<font size=+2>%s+%s+%s</font>" % (f,r,n)) % s
         return (stats, stats2)
 
+    def disableMedia(self):
+        "Stop processing media for the rest of the request."
+        self._disableMedia = True
+
     def prepareMedia(self, string, auto=True):
+        class AudioThread(threading.Thread):
+            def __init__(self, *args, **kwargs):
+                self.toPlay = kwargs['toPlay']
+                print "to play", self.toPlay
+                del kwargs['toPlay']
+                threading.Thread.__init__(self, *args, **kwargs)
+            def run(self):
+                for f in self.toPlay:
+                    subprocess.Popen([config.get('PLAY_COMMAND'), "-really-quiet", f]).wait()
+        toPlay = []
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
                 if auto and (filename.lower().endswith(".mp3") or
                              filename.lower().endswith(".wav")):
-                    if not self.played and deck.mediaDir():
-                        subprocess.Popen([config.get('PLAY_COMMAND'),
-                                          os.path.join(deck.mediaDir(), filename)])
-                        self.played = True
+                    if deck.mediaDir():
+                        toPlay.append(os.path.join(deck.mediaDir(), filename))
                 string = re.sub(re.escape(fullMatch), "", string)
             else:
-                pass
-                #string = re.sub(re.escape(fullMatch), '''
-                #<img src="%(f)s">''' % {'f': relativeMediaPath(filename)}, string)
-                #return string
+                string = re.sub(
+                    re.escape(fullMatch), '<img src="%(f)s">' %
+                    {'f': relativeMediaPath(filename)}, string)
+        if getattr(self, "_disableMedia", None):
+            return string
+        self.played = toPlay
+        at = AudioThread(toPlay=toPlay)
+        at.start()
         return string
 
 def run(server_class=HTTPServer,
