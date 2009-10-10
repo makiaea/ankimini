@@ -1020,7 +1020,6 @@ the problem magically goes away.
         class AudioThread(threading.Thread):
             def __init__(self, *args, **kwargs):
                 self.toPlay = kwargs['toPlay']
-                print "to play", self.toPlay
                 del kwargs['toPlay']
                 threading.Thread.__init__(self, *args, **kwargs)
             def run(self):
@@ -1037,7 +1036,7 @@ the problem magically goes away.
             else:
                 string = re.sub(
                     re.escape(fullMatch), '<img src="%(f)s">' %
-                    {'f': relativeMediaPath(filename)}, string)
+                    {'f': filename}, string)
         if getattr(self, "_disableMedia", None):
             return string
         self.played = toPlay
