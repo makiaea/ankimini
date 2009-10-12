@@ -1024,7 +1024,7 @@ the problem magically goes away.
                 threading.Thread.__init__(self, *args, **kwargs)
             def run(self):
                 for f in self.toPlay:
-                    subprocess.Popen([config.get('PLAY_COMMAND'), "-really-quiet", f]).wait()
+                    subprocess.Popen([config.get('PLAY_COMMAND'), f]).wait()
         toPlay = []
         for (fullMatch, filename, replacementString) in mediaRefs(string):
             if fullMatch.startswith("["):
