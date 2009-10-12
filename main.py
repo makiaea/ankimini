@@ -392,7 +392,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             try:
                 global deck
                 deck = switchDeck( deck, deckpath )
-                conifg['DECK_PATH']=deck.path
+                config['DECK_PATH']=deck.path
                 config.saveConfig()
                 deck.rebuildQueue()
             except Exception, e:
