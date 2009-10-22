@@ -12,6 +12,12 @@ Changes:
 --------
 
 ---------------
+AnkiMini 2.0.4:
+---------------
+
+- remove debug code which was breaking sound
+
+---------------
 AnkiMini 2.0.3:
 ---------------
 
