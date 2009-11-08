@@ -705,18 +705,19 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                 self.wfile.write(open(os.path.join(deck.mediaDir(), lp[1:])).read())
             except:
                 pass
-        if lp.endswith(".jpg"):
-            self.send_response(200)
-            self.send_header("Content-type", "image/jpeg")
-            self.end_headers()
-            writeImage()
-            return
-        if lp.endswith(".png"):
-            self.send_response(200)
-            self.send_header("Content-type", "image/png")
-            self.end_headers()
-            writeImage()
-            return
+        for (ext, type) in ((".jpg", "image/jpeg"),
+                            (".jpeg", "image/jpeg"),
+                            (".png", "image/png"),
+                            (".gif", "image/gif"),
+                            (".tif", "image/tiff"),
+                            (".tiff", "image/tiff"),
+                            (".png", "image/png")):
+            if lp.endswith(ext):
+                self.send_response(200)
+                self.send_header("Content-type", type)
+                self.end_headers()
+                writeImage()
+                return
         history.append(self.path)
         serviceStart = time.time()
         global currentCard, deck
