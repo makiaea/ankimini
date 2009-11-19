@@ -760,27 +760,29 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             deck.save()
             self.path = "/question#inner_top"
         elif deck and self.path.startswith("/mark"):
-            f = deck.s.query(Fact).get(currentCard.factId)
-            if "marked" in f.tags.lower():
-                t = parseTags(f.tags)
-                t.remove("Marked")
-                f.tags = joinTags(t)
-            else:
-                f.tags = joinTags(parseTags(
-                    f.tags) + ["Marked"])
-            f.setModified(textChanged=True)
-            deck.updateFactTags([f.id])
-            f.setModified()
-            deck.flushMod()
-            deck.s.flush()
-            deck.s.expunge(f)
-            history.pop()
+            if currentCard:
+                f = deck.s.query(Fact).get(currentCard.factId)
+                if "marked" in f.tags.lower():
+                    t = parseTags(f.tags)
+                    t.remove("Marked")
+                    f.tags = joinTags(t)
+                else:
+                    f.tags = joinTags(parseTags(
+                        f.tags) + ["Marked"])
+                f.setModified(textChanged=True)
+                deck.updateFactTags([f.id])
+                f.setModified()
+                deck.flushMod()
+                deck.s.flush()
+                deck.s.expunge(f)
+                history.pop()
             self.path = "/question#inner_top"
         elif deck and self.path.startswith("/replay"):
-            self.prepareMedia(currentCard.question)
-            self.prepareMedia(currentCard.answer)
-            self.disableMedia()
-            history.pop()
+            if currentCard:
+                self.prepareMedia(currentCard.question)
+                self.prepareMedia(currentCard.answer)
+                self.disableMedia()
+                history.pop()
             self.path = "/question"
         elif deck and self.path.startswith("/sync"):
             deck.save()
