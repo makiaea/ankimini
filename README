@@ -12,6 +12,12 @@ Changes:
 --------
 
 ---------------
+AnkiMini 2.0.5:
+---------------
+
+- rollback timeout code which is causing problems on some iphones
+
+---------------
 AnkiMini 2.0.4:
 ---------------
 
