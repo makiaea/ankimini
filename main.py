@@ -392,11 +392,18 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             try:
                 global deck
                 deck = switchDeck( deck, deckpath )
-                config['DECK_PATH']=deck.path
-                config.saveConfig()
-                deck.rebuildQueue()
+                if deck:
+                    config['DECK_PATH']=deck.path
+                    config.saveConfig()
+                    deck.rebuildQueue()
+                else:
+                    errorMsg += "<br /><br /><b>Deck didn't change</b>: " 
+                    if os.path.exists(deckpath):
+                        errorMsg += "New deck file exists but failed to open.  Could be corrupt?"
+                    else:
+                        errorMsg += ("Deck file does not exist.  Download one from Anki online, or copy a deck from your PC to %s on this device." % ANKIMINI_PATH)
             except Exception, e:
-                errorMsg += "<br /><br />Deck didn't change: " + str(e)
+                errorMsg += "<br /><br />Unexpected exception trying to change deck: " + str(e)
 
             obscured = '*' * len(password)
             buffer += """
@@ -440,7 +447,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
         try:
             deckList = glob.glob(os.path.join(ANKIMINI_PATH,"*.anki"))
             if deckList is None or len(deckList)==0:
-                buffer += "<em>You have no local decks!</em>"
+                buffer += "<em>You have no local decks!<br />Download one from Anki online, or copy deck files from your PC to %s on this device." % ANKIMINI_PATH
             else:
                 buffer += '<table width="80%%" cellspacing="10"><col width="80%%" />'
                 for p in deckList:
@@ -481,14 +488,14 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
             proxy = HttpSyncServerProxy(config.get('SYNC_USERNAME'), config.get('SYNC_PASSWORD'))
             deckList = proxy.availableDecks()
             if deckList is None or len(deckList)==0:
-                buffer += "<em>You have no online decks!</em>"
+                buffer += "<br /><em>You have no online decks!</em>"
             else:
                 buffer += '<table width="100%%" cellspacing="10">'
                 for d in deckList:
                    	buffer += '<tr height><td><a href="/download?deck=%s">%s</a></td></tr>' % ( d, d )
                 buffer += "</table>"
         except:
-            buffer += "<em>Can't connect - check username/password</em>"
+            buffer += "<br /><em>Can't connect - check username/password</em>"
 
         buffer += """
 		<br /><a href="/question#inner_top">return</a>
