@@ -191,10 +191,10 @@ WebCanvas.prototype._onButtonReleased = function(event) {
         this.ctx.restore();
 
         /* Added for tests only. Smoothing should be performed on a copy. */
-        if (this.writing.getNStrokes() > 0){
-            this.writing.getStrokes()[this.writing.getNStrokes() - 1].smooth();
-            this.draw();
-        }
+        // if (this.writing.getNStrokes() > 0){
+        //     this.writing.getStrokes()[this.writing.getNStrokes() - 1].smooth();
+        //     this.draw();
+        // }
     }
 }
 

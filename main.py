@@ -1073,7 +1073,7 @@ alert("return");
         return;
     }
 
-    document.getElementById(id).innerHTML = '<canvas id="ianki_webcanvas" width="200" height="200" style="border: 1px solid black">canvas</canvas><ul style="list-style-type: none; padding: 0; margin: 0; font-size: .6em"> <li style="display: inline"><a href="#" onclick="document.webcanvas.clear();">clear</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.revertStroke();">undo stroke</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.replay();">replay</a></li></ul>';
+    document.getElementById(id).innerHTML = '<canvas id="ianki_webcanvas" width="400" height="400" style="border: 1px solid black">canvas</canvas><ul style="list-style-type: none; padding: 0; margin: 0; font-size: .6em"> <li style="display: inline"><a href="#" onclick="document.webcanvas.clear();">clear</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.revertStroke();">undo stroke</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.replay();">replay</a></li></ul>';
 
     document.webcanvas = null;
 
