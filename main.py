@@ -706,7 +706,6 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
     def do_GET(self):
         global config
         self.played = False
-        # image request?
         lp = self.path.lower()
         def writeImage():
             try:
@@ -726,13 +725,6 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                 self.end_headers()
                 writeImage()
                 return
-        # js request?
-        if lp.startswith("/js/"):
-            self.send_response(200)
-            self.send_header("Content-type", "text/javascript")
-            self.end_headers()
-            self.wfile.write(open(os.path.join(os.path.dirname(__file__), self.path[1:])).read())
-            return
         history.append(self.path)
         serviceStart = time.time()
         global currentCard, deck
@@ -1060,33 +1052,6 @@ the problem magically goes away.
         self.played = toPlay
         at = AudioThread(toPlay=toPlay)
         at.start()
-        if "canvas" in string:
-            string += """
-<script src="/js/character.js" type="text/javascript"></script>
-<script src="/js/webcanvas.js" type="text/javascript"></script>
-<script type="text/javascript" language="javascript">
-<!--
-function add_canvas() {
-    var id = "canvas";
-    if (!document.getElementById(id)) {
-alert("return");
-        return;
-    }
-
-    document.getElementById(id).innerHTML = '<canvas id="ianki_webcanvas" width="200" height="200" style="border: 1px solid black">canvas</canvas><ul style="list-style-type: none; padding: 0; margin: 0; font-size: .6em"> <li style="display: inline"><a href="#" onclick="document.webcanvas.clear();">clear</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.revertStroke();">undo stroke</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.replay();">replay</a></li></ul>';
-
-    document.webcanvas = null;
-
-    var canvas = document.getElementById('ianki_webcanvas');
-
-    if (canvas.getContext) {
-        document.webcanvas = new WebCanvas(canvas);
-        document.webcanvas.draw();
-    }
-}
-add_canvas();
-//-->
-</script>"""
         return string
 
 def run(server_class=HTTPServer,
@@ -1111,3 +1076,5 @@ if __name__ == '__main__':
     history = []
     print "starting server on port %d" % config.get('SERVER_PORT',8000)
     run()
+
+
