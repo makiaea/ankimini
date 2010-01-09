@@ -178,6 +178,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 </script>
 </head>
 <body style="margin-left: 0; margin-top: 0; margin-right: 0">
+<center><div style="width:470px;" id="canvas"></div></center>
 <iframe src="/question" width=470 frameborder=0 height=700>
 </iframe>
 </body></html>"""
@@ -836,6 +837,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
                         buffer += (self._top() + ("""
 <br>
 <div class="qa-area">
+%(canvas)s
 <div class="q" %(divider)s>%(question)s<br /></div>
 </div>
 <br></div><br><form action="/answer" method="get" style="margin: 0px; padding: 0px;">
@@ -848,6 +850,7 @@ window.scrollTo(0, 1); // pan to the bottom, hides the location bar
 """ % {
         "divider": 'style="border-bottom-style: solid; border-bottom-width: 1px; border-bottom-color: #7F7F7F;"' if config.get('DISPLAY_DIVIDER', False) else '',
         "question": self.prepareMedia(currentCard.htmlQuestion(align=False)),
+        "canvas": self.canvasTxt() if "[canvas]" in currentCard.question else '',
         }))
                         buffer += (self._bottom)
                 except Exception, e:
@@ -1034,6 +1037,34 @@ the problem magically goes away.
         "Stop processing media for the rest of the request."
         self._disableMedia = True
 
+    def canvasTxt(self):
+        return """
+<script src="/js/character.js" type="text/javascript"></script>
+<script src="/js/webcanvas.js" type="text/javascript"></script>
+<script type="text/javascript" language="javascript">
+<!--
+function add_canvas() {
+    var id = "canvas";
+    if (!parent.document.getElementById(id)) {
+alert("return");
+        return;
+    }
+
+    parent.document.getElementById(id).innerHTML = '<canvas id="ianki_webcanvas" width="400" height="400" style="border: 1px solid black">canvas</canvas><ul style="list-style-type: none; padding: 0; margin: 0; font-size: .6em"> <li style="display: inline"><a href="#" onclick="document.webcanvas.clear();">clear</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.revertStroke();">undo stroke</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.replay();">replay</a></li></ul>';
+
+    parent.document.webcanvas = null;
+
+    var canvas = parent.document.getElementById('ianki_webcanvas');
+
+    if (canvas.getContext) {
+        parent.document.webcanvas = new WebCanvas(canvas);
+        parent.document.webcanvas.draw();
+    }
+}
+add_canvas();
+//-->
+</script>"""
+
     def prepareMedia(self, string, auto=True):
         class AudioThread(threading.Thread):
             def __init__(self, *args, **kwargs):
@@ -1060,33 +1091,6 @@ the problem magically goes away.
         self.played = toPlay
         at = AudioThread(toPlay=toPlay)
         at.start()
-        if "canvas" in string:
-            string += """
-<script src="/js/character.js" type="text/javascript"></script>
-<script src="/js/webcanvas.js" type="text/javascript"></script>
-<script type="text/javascript" language="javascript">
-<!--
-function add_canvas() {
-    var id = "canvas";
-    if (!document.getElementById(id)) {
-alert("return");
-        return;
-    }
-
-    document.getElementById(id).innerHTML = '<canvas id="ianki_webcanvas" width="400" height="400" style="border: 1px solid black">canvas</canvas><ul style="list-style-type: none; padding: 0; margin: 0; font-size: .6em"> <li style="display: inline"><a href="#" onclick="document.webcanvas.clear();">clear</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.revertStroke();">undo stroke</a></li> <li style="display: inline"><a href="#" onclick="document.webcanvas.replay();">replay</a></li></ul>';
-
-    document.webcanvas = null;
-
-    var canvas = document.getElementById('ianki_webcanvas');
-
-    if (canvas.getContext) {
-        document.webcanvas = new WebCanvas(canvas);
-        document.webcanvas.draw();
-    }
-}
-add_canvas();
-//-->
-</script>"""
         return string
 
 def run(server_class=HTTPServer,
